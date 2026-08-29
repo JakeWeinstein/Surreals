@@ -13,3 +13,4 @@ import Infinity.GeneralDeriv
 import Infinity.IntegralS
 import Infinity.CanonicalSum
 import Infinity.ExpMul
+import Infinity.MicroKernel
