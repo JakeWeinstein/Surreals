@@ -30,6 +30,7 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The surreal-point derivative** | `HasDerivS`: derivative at *every* surreal point with surreal values (`O(ε²)` error over all infinitesimal increments); unique; every `Surreal[X]` polynomial differentiable everywhere | [`Infinity/GeneralDeriv.lean`](Infinity/GeneralDeriv.lean) |
 | **The Galaxy Kernel Theorem** | The galaxy indicator (0 on finite, 1 on infinite) has derivative **zero everywhere** yet isn't constant — so **no FTC integral exists for arbitrary surreal functions**: the Conway–Kruskal–Norton difficulty, as a theorem | [`Infinity/GeneralDeriv.lean`](Infinity/GeneralDeriv.lean) |
 | **The full surreal integral** | `integralS` on `Surreal[X]` with surreal endpoints: **FTC I at every surreal point**, FTC II, uniqueness, linearity, compatibility with the real-coefficient integral | [`Infinity/IntegralS.lean`](Infinity/IntegralS.lean) |
+| **The canonical sum + `exp` as a function** | `hahnSum`: **the** birthday-simplest transfinite sum (the Hahn sums are exactly the surreals between two explicit cuts; `simplestBtwn` picks the canonical one); `expInf`: the exponential on nonzero infinitesimals as an honest function, with `st(exp ε) = 1` and `exp ε = 1 + ε + O(ε²)` | [`Infinity/CanonicalSum.lean`](Infinity/CanonicalSum.lean) |
 
 ## The one-paragraph story
 

@@ -35,7 +35,7 @@ theorem mk_pow_lt_mk_pow_succ' {e : Surreal} (he : Infinitesimal e) (he0 : e ≠
   have h := mk_pow_lt_mk_pow_succ habsinf habs0 k
   rwa [← abs_pow, ← abs_pow, ArchimedeanClass.mk_abs, ArchimedeanClass.mk_abs] at h
 
-private theorem mk_factorial (k : ℕ) : ArchimedeanClass.mk ((k.factorial : ℕ) : Surreal) = 0 := by
+theorem mk_factorial (k : ℕ) : ArchimedeanClass.mk ((k.factorial : ℕ) : Surreal) = 0 := by
   apply mk_eq_zero_of_stdPart_ne_zero
   rw [ArchimedeanClass.stdPart_natCast]
   exact_mod_cast k.factorial_ne_zero
