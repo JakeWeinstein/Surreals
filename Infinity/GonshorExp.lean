@@ -1,5 +1,6 @@
 import Infinity.Exp
 import Infinity.MicroKernel
+import Mathlib.Analysis.Complex.Exponential
 
 /-!
 # Gonshor's exponential at limit arguments: `exp ω = ω^ω`
@@ -358,5 +359,109 @@ theorem gonshorCut_eq_wpow {a : Surreal} {s v : ℕ → Surreal}
       show wlog (v n) + ((k : ℕ) : Surreal) * wlog (a - s n) <
         wlog (v n) + ((k + 1 : ℕ) : Surreal) * wlog (a - s n)
       linarith
+
+/-! ### `ω` as the cut of the naturals -/
+
+private theorem mk_wpow_one_neg' : ArchimedeanClass.mk (ω^ (1 : Surreal)) < 0 := by
+  have h := archimedeanClassMk_wpow_strictAnti (one_pos : (0 : Surreal) < 1)
+  simpa using h
+
+private theorem mk_natCast_eq_zero {n : ℕ} (hn : n ≠ 0) :
+    ArchimedeanClass.mk ((n : Surreal)) = 0 := by
+  apply mk_eq_zero_of_stdPart_ne_zero
+  rw [ArchimedeanClass.stdPart_natCast]
+  exact_mod_cast hn
+
+private theorem mk_wpow_one_sub_natCast (n : ℕ) :
+    ArchimedeanClass.mk (ω^ (1 : Surreal) - (n : Surreal)) =
+      ArchimedeanClass.mk (ω^ (1 : Surreal)) := by
+  obtain rfl | hn := Nat.eq_zero_or_pos n
+  · rw [Nat.cast_zero, sub_zero]
+  · rw [sub_eq_add_neg]
+    exact ArchimedeanClass.mk_add_eq_mk_left
+      (by rw [ArchimedeanClass.mk_neg, mk_natCast_eq_zero hn.ne']; exact mk_wpow_one_neg')
+
+private theorem not_isFinite_wpow_one_sub_natCast (n : ℕ) :
+    ¬ IsFinite (ω^ (1 : Surreal) - (n : Surreal)) := by
+  intro hfin
+  have h0 : (0 : ArchimedeanClass Surreal) ≤ ArchimedeanClass.mk (ω^ (1 : Surreal)) := by
+    rw [← mk_wpow_one_sub_natCast n]
+    exact isFinite_def.1 hfin
+  exact absurd h0 (not_le.2 mk_wpow_one_neg')
+
+/-- The gaps `ω − n` all live at the scale of `ω` itself. -/
+theorem wlog_wpow_one_sub_natCast (n : ℕ) :
+    wlog (ω^ (1 : Surreal) - (n : Surreal)) = 1 := by
+  have h := wlog_congr (veq_def.2 (mk_wpow_one_sub_natCast n))
+  rw [h, wlog_wpow]
+
+/-- **`ω` is the left-cut of the naturals**: `ω^1 = !{0, 1, 2, … | ∅}` at the `Surreal`
+level (Conway's day-`ω` definition of `ω`, recovered from CG's genetic `ω`-map). -/
+theorem wpow_one_eq_ofSets_natCast :
+    ω^ (1 : Surreal) = !{Set.range (fun n : ℕ ↦ (n : Surreal)) | ∅} := by
+  rw [one_def, wpow_ofSets]
+  apply ofSets_left_eq_of_cofinal
+  · rintro z (rfl | ⟨r, hr, x, hx, rfl⟩)
+    · exact ⟨((0 : ℕ) : Surreal), ⟨0, rfl⟩, by simp⟩
+    · rw [Set.mem_singleton_iff] at hx
+      subst hx
+      obtain ⟨m, hm⟩ := exists_nat_ge (r : ℚ)
+      refine ⟨(m : Surreal), ⟨m, rfl⟩, ?_⟩
+      show (r : Surreal) * ω^ (0 : Surreal) ≤ (m : Surreal)
+      rw [wpow_zero, mul_one]
+      exact_mod_cast hm
+  · rintro z ⟨m, rfl⟩
+    refine ⟨(((m + 1 : ℕ) : Dyadic) : Surreal) * ω^ (0 : Surreal),
+      Set.mem_insert_of_mem _ (Set.mem_image2_of_mem ?_ (Set.mem_singleton 0)), ?_⟩
+    · rw [Set.mem_Ioi]
+      exact_mod_cast Nat.succ_pos m
+    · show (m : Surreal) ≤ (((m + 1 : ℕ) : Dyadic) : Surreal) * ω^ (0 : Surreal)
+      rw [wpow_zero, mul_one]
+      exact_mod_cast Nat.le_succ m
+
+/-! ### The flagship: `exp ω = ω^ω` -/
+
+/-- **The exponential of `ω` is `ω^ω`** (Gonshor; the survey's displayed computation,
+machine-checked). Precisely: at the canonical representation `ω = !{n | ∅}`, Gonshor's
+genetic formula for `exp ω` has left options `0` and `eⁿ·Eₖ(ω − n)` (the seed values
+`exp n = eⁿ` being the recursion's already-known values at the finite left options) and no
+right options (`aᴿ = ∅`, and the candidates from `aᴸ` are barred by
+`expPartial_odd_neg`); the resulting cut is exactly `ω^ω`. -/
+theorem gonshorExp_omega :
+    (!{insert 0 (Set.range fun p : ℕ × ℕ ↦
+        ((Real.exp p.1 : ℝ) : Surreal) * expPartial p.2 (ω^ (1 : Surreal) - (p.1 : Surreal)))
+      | ∅} : Surreal) = ω^ ω^ (1 : Surreal) := by
+  have hexp : (!{Set.range (fun p : ℕ × ℕ ↦ wlog (((Real.exp p.1 : ℝ) : Surreal)) +
+      (p.2 : Surreal) * wlog (ω^ (1 : Surreal) - (p.1 : Surreal))) | ∅} : Surreal) =
+      ω^ (1 : Surreal) := by
+    conv_rhs => rw [wpow_one_eq_ofSets_natCast]
+    apply ofSets_left_eq_of_cofinal
+    · rintro z ⟨⟨n, k⟩, rfl⟩
+      refine ⟨(k : Surreal), ⟨k, rfl⟩, le_of_eq ?_⟩
+      show wlog (((Real.exp n : ℝ) : Surreal)) +
+        (k : Surreal) * wlog (ω^ (1 : Surreal) - (n : Surreal)) = (k : Surreal)
+      rw [wlog_realCast, wlog_wpow_one_sub_natCast, zero_add, mul_one]
+    · rintro z ⟨k, rfl⟩
+      refine ⟨_, ⟨((0 : ℕ), k), rfl⟩, le_of_eq ?_⟩
+      show (k : Surreal) = wlog (((Real.exp (0 : ℕ) : ℝ) : Surreal)) +
+        (k : Surreal) * wlog (ω^ (1 : Surreal) - ((0 : ℕ) : Surreal))
+      rw [wlog_realCast, wlog_wpow_one_sub_natCast, zero_add, mul_one]
+  have h := gonshorCut_eq_wpow (a := ω^ (1 : Surreal)) (s := fun n : ℕ ↦ (n : Surreal))
+    (v := fun n : ℕ ↦ ((Real.exp n : ℝ) : Surreal))
+    (fun n ↦ by simpa using Real.exp_pos n)
+    (fun n ↦ natCast_lt_wpow_one n)
+    (fun n ↦ not_isFinite_wpow_one_sub_natCast n)
+  exact h.trans (by rw [hexp])
+
+/-- The right options of Gonshor's formula at `ω` are genuinely empty: the admissibility
+condition `E₂ₖ₊₁(n − ω) > 0` fails for every `n, k` (the survey's parenthetical). -/
+theorem gonshor_right_options_omega_neg (n k : ℕ) :
+    expPartial (2 * k + 1) ((n : Surreal) - ω^ (1 : Surreal)) < 0 := by
+  have h1 : (n : Surreal) - ω^ (1 : Surreal) < 0 :=
+    sub_neg.2 (natCast_lt_wpow_one n)
+  have h2 : ¬ IsFinite ((n : Surreal) - ω^ (1 : Surreal)) := by
+    intro hfin
+    exact not_isFinite_wpow_one_sub_natCast n (by simpa using hfin.neg)
+  exact expPartial_odd_neg h1 h2 k
 
 end Surreal
