@@ -22,6 +22,7 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Gap theorem** | `1/n` converges to *no* surreal — it converges to a gap of No | [`Infinity/Limits.lean`](Infinity/Limits.lean) |
 | **Eventual constancy** | An ℕ-indexed sequence of surreals converges **iff it is eventually constant** (via countable coinitiality: `{0 ∣ z₀, z₁, …}`) | [`Infinity/Limits.lean`](Infinity/Limits.lean) |
 | **Summation without convergence** | `Σ_{k<ω} ω⁻ᵏ` has the canonical sum `ω/(ω−1)` under domination semantics (`IsHahnSum`), yet its partial sums converge to nothing | [`Infinity/Series.lean`](Infinity/Series.lean) |
+| **Transfinite Summation Theorem** | *Every* strictly dominating series has a Hahn sum — the Conway cut `!{sₙ−2\|tₙ\| ∣ sₙ+2\|tₙ\|}`; corollary: every ω-power series `Σ rₖ ω⁻ᵏ` sums | [`Infinity/Summation.lean`](Infinity/Summation.lean) |
 | Derivatives at all finite points | `st(p(x)) = p(st x)`, and the derivative at any finite surreal anchor factors through the standard part | [`Infinity/FiniteDeriv.lean`](Infinity/FiniteDeriv.lean) |
 
 ## The one-paragraph story
