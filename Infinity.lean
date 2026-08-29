@@ -8,3 +8,4 @@ import Infinity.FiniteDeriv
 import Infinity.Summation
 import Infinity.Riemann
 import Infinity.Exp
+import Infinity.Integral
