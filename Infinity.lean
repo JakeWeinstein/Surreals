@@ -14,3 +14,8 @@ import Infinity.IntegralS
 import Infinity.CanonicalSum
 import Infinity.ExpMul
 import Infinity.MicroKernel
+import Infinity.KernelSeparation
+import Infinity.CauchyProduct
+import Infinity.Sqrt
+import Infinity.OrdinalSum
+import Infinity.BirthdayHahn

@@ -34,6 +34,16 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The Fractal Kernel Theorem** | The kernel question, *settled*: the micro-galaxy indicator has derivative **zero at every point** (uniform constant `C = ω^ω`) yet jumps between two points an **infinitesimal** apart — zero-derivative functions vary at every scale; antiderivative increments are ill-defined even over infinitesimal intervals | [`Infinity/MicroKernel.lean`](Infinity/MicroKernel.lean) |
 | **The canonical sum + `exp` as a function** | `hahnSum`: **the** birthday-simplest transfinite sum (the Hahn sums are exactly the surreals between two explicit cuts; `simplestBtwn` picks the canonical one); `expInf`: the exponential on nonzero infinitesimals as an honest function, with `st(exp ε) = 1` and `exp ε = 1 + ε + O(ε²)` | [`Infinity/CanonicalSum.lean`](Infinity/CanonicalSum.lean) |
 
+### The fleet results (five parallel provers, one afternoon)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **Kernel Separation Theorem** | For *every* `a ≠ b` there is a zero-derivative function with `F a ≠ F b` — the derivative on No carries no global information; antiderivative increments ill-defined over every nondegenerate interval | [`Infinity/KernelSeparation.lean`](Infinity/KernelSeparation.lean) |
+| **General Cauchy Product** | `IsHahnSum.mul` under a single no-cancellation floor; exactness-at-⊤ lever; exp law re-derived; `Σ(n+1)ω⁻ⁿ = (ω/(ω−1))²` | [`Infinity/CauchyProduct.lean`](Infinity/CauchyProduct.lean) |
+| **Square roots** | Exact roots of every `r·ω^x`; canonical `√(1+u)` with square correct below every scale; **every positive surreal has a square root modulo sub-all-scales error** — the doorstep of real-closedness | [`Infinity/Sqrt.lean`](Infinity/Sqrt.lean) |
+| **ω+ω summation** | Transfinite summation past length ω: two-block sums via canonicity, composing to ω·3 in lines — the road to full Hahn evaluation | [`Infinity/OrdinalSum.lean`](Infinity/OrdinalSum.lean) |
+| **Simplicity uniqueness + exact canonical sums** | The birthday-simplest fit between cuts is *unique* (Conway's simplicity theorem, sign-expansion-free); `hahnSum(−t) = −hahnSum t`; first closed-form canonical sums (`= 1`, `= ω`); `birthday ω = ω`; additivity/multiplicativity reduced to sharp birthday inequalities | [`Infinity/BirthdayHahn.lean`](Infinity/BirthdayHahn.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
