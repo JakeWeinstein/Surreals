@@ -27,6 +27,9 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Riemann collapse** | The classical ε–δ Riemann integral is *vacuous* on No: no partition has infinitesimal mesh, so **every surreal is a Riemann integral of every function** | [`Infinity/Riemann.lean`](Infinity/Riemann.lean) |
 | **`e^(1/ω)` exists** | The exponential series `Σ εᵏ/k!` at any nonzero infinitesimal is strictly dominating, hence has a transfinite sum | [`Infinity/Exp.lean`](Infinity/Exp.lean) |
 | **The integral + FTC** | `∫ₐᵇ p` for polynomials with *arbitrary surreal endpoints*; **FTC I & II**; uniqueness (any FTC-compatible operator is this one); linearity; **`∫₀^ω x dx = ω²/2`** as a theorem; term-by-term integration of transfinite series | [`Infinity/Integral.lean`](Infinity/Integral.lean) |
+| **The surreal-point derivative** | `HasDerivS`: derivative at *every* surreal point with surreal values (`O(ε²)` error over all infinitesimal increments); unique; every `Surreal[X]` polynomial differentiable everywhere | [`Infinity/GeneralDeriv.lean`](Infinity/GeneralDeriv.lean) |
+| **The Galaxy Kernel Theorem** | The galaxy indicator (0 on finite, 1 on infinite) has derivative **zero everywhere** yet isn't constant — so **no FTC integral exists for arbitrary surreal functions**: the Conway–Kruskal–Norton difficulty, as a theorem | [`Infinity/GeneralDeriv.lean`](Infinity/GeneralDeriv.lean) |
+| **The full surreal integral** | `integralS` on `Surreal[X]` with surreal endpoints: **FTC I at every surreal point**, FTC II, uniqueness, linearity, compatibility with the real-coefficient integral | [`Infinity/IntegralS.lean`](Infinity/IntegralS.lean) |
 
 ## The one-paragraph story
 

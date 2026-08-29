@@ -9,3 +9,5 @@ import Infinity.Summation
 import Infinity.Riemann
 import Infinity.Exp
 import Infinity.Integral
+import Infinity.GeneralDeriv
+import Infinity.IntegralS
