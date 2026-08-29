@@ -274,4 +274,89 @@ theorem wpow_ofSets (A : Set Surreal) [Small.{u} A] :
     rintro a ha
     exact absurd ha (Set.notMem_empty a)
 
+/-! ### The limit-step evaluation theorem -/
+
+/-- The `ω`-logarithm of an infinite surreal is positive. -/
+theorem wlog_pos {u : Surreal} (h : ¬ IsFinite u) : 0 < wlog u := by
+  have hu : u ≠ 0 := ne_zero_of_not_isFinite h
+  have h2 : ArchimedeanClass.mk (ω^ wlog u) < ArchimedeanClass.mk (ω^ (0 : Surreal)) := by
+    rw [archimedeanClassMk_wpow_wlog hu, wpow_zero, ArchimedeanClass.mk_one]
+    exact not_le.1 fun hle ↦ h hle
+  exact archimedeanClassMk_wpow_strictAnti.lt_iff_gt.1 h2
+
+/-- `ω`-powers at natural multiples are iterated powers. -/
+theorem wpow_natCast_mul (d : Surreal) (k : ℕ) : ω^ ((k : Surreal) * d) = (ω^ d) ^ k := by
+  induction k with
+  | zero => simp
+  | succ k ih => rw [Nat.cast_succ, add_mul, one_mul, wpow_add, ih, pow_succ]
+
+/-- The magnitude class of a Gonshor option `v · Eₖ(y)`: it is that of
+`ω^(wlog v + k · wlog y)`. -/
+private theorem mk_gonshor_option {v y : Surreal} (hv0 : v ≠ 0) (hy : ¬ IsFinite y) (k : ℕ) :
+    ArchimedeanClass.mk (v * expPartial k y) =
+      ArchimedeanClass.mk (ω^ (wlog v + (k : Surreal) * wlog y)) := by
+  rw [ArchimedeanClass.mk_mul, mk_expPartial hy, ArchimedeanClass.mk_pow,
+    wpow_add, wpow_natCast_mul, ArchimedeanClass.mk_mul, ArchimedeanClass.mk_pow,
+    archimedeanClassMk_wpow_wlog hv0,
+    archimedeanClassMk_wpow_wlog (ne_zero_of_not_isFinite hy)]
+
+private theorem mk_dyadic_cast {r : Dyadic} (hr : r ≠ 0) :
+    ArchimedeanClass.mk ((r : Surreal)) = 0 := by
+  rw [← Real.toSurreal_ratCast]
+  exact mk_realCast (by exact_mod_cast hr)
+
+/-- **The limit-step evaluation theorem.** Let `a` be any surreal, `s n < a` approximants
+with each gap `a − s n` infinite, and `v n > 0` "seed values". Then the left-only cut
+whose options are `0` and all `v n · Eₖ(a − s n)` equals the `ω`-power of the cut of
+exponents `wlog (v n) + k · wlog (a − s n)`.
+
+Interpretation (Gonshor ch. 10, survey Thm 2.15): when `a = !{s₀, s₁, … | ∅}` and
+`v n = exp (s n)` are the recursion's already-known values, the LHS is exactly Gonshor's
+genetic formula for `exp a` — its right options vanish by `expPartial_odd_neg` — and the
+RHS displays the value as `ω^(cut of exponents)`, the mechanism behind Gonshor's
+`g`-function. The theorem itself is representation-free: only the domination structure of
+the options matters. -/
+theorem gonshorCut_eq_wpow {a : Surreal} {s v : ℕ → Surreal}
+    (hv : ∀ n, 0 < v n) (hs : ∀ n, s n < a) (hinf : ∀ n, ¬ IsFinite (a - s n)) :
+    (!{insert 0 (Set.range fun p : ℕ × ℕ ↦ v p.1 * expPartial p.2 (a - s p.1)) | ∅} : Surreal)
+      = ω^ (!{Set.range fun p : ℕ × ℕ ↦
+          wlog (v p.1) + (p.2 : Surreal) * wlog (a - s p.1) | ∅} : Surreal) := by
+  rw [wpow_ofSets]
+  apply ofSets_left_eq_of_cofinal
+  · rintro z (rfl | ⟨⟨n, k⟩, rfl⟩)
+    · exact ⟨0, Set.mem_insert 0 _, le_rfl⟩
+    · refine ⟨((1 : Dyadic) : Surreal) *
+          ω^ (wlog (v n) + ((k + 1 : ℕ) : Surreal) * wlog (a - s n)),
+        Set.mem_insert_of_mem _
+          (Set.mem_image2_of_mem (by norm_num) ⟨(n, k + 1), rfl⟩), ?_⟩
+      have hone : ((1 : Dyadic) : Surreal) = 1 := by norm_cast
+      rw [hone, one_mul]
+      refine le_of_lt (lt_of_mk_lt_of_pos ?_ (wpow_pos _))
+      rw [mk_gonshor_option (hv n).ne' (hinf n)]
+      apply archimedeanClassMk_wpow_strictAnti
+      have hd : 0 < wlog (a - s n) := wlog_pos (hinf n)
+      have hk : ((k : ℕ) : Surreal) < ((k + 1 : ℕ) : Surreal) := by
+        exact_mod_cast k.lt_succ_self
+      have hmul := mul_lt_mul_of_pos_right hk hd
+      show wlog (v n) + ((k : ℕ) : Surreal) * wlog (a - s n) <
+        wlog (v n) + ((k + 1 : ℕ) : Surreal) * wlog (a - s n)
+      linarith
+  · rintro z (rfl | ⟨r, hr, e, ⟨⟨n, k⟩, rfl⟩, rfl⟩)
+    · exact ⟨0, Set.mem_insert 0 _, le_rfl⟩
+    · refine ⟨v n * expPartial (k + 1) (a - s n),
+        Set.mem_insert_of_mem _ ⟨(n, k + 1), rfl⟩, ?_⟩
+      have hy : 0 < a - s n := sub_pos.2 (hs n)
+      refine le_of_lt (lt_of_mk_lt_of_pos ?_
+        (mul_pos (hv n) (expPartial_pos hy (k + 1))))
+      rw [mk_gonshor_option (hv n).ne' (hinf n), ArchimedeanClass.mk_mul,
+        mk_dyadic_cast (ne_of_gt hr), zero_add]
+      apply archimedeanClassMk_wpow_strictAnti
+      have hd : 0 < wlog (a - s n) := wlog_pos (hinf n)
+      have hk : ((k : ℕ) : Surreal) < ((k + 1 : ℕ) : Surreal) := by
+        exact_mod_cast k.lt_succ_self
+      have hmul := mul_lt_mul_of_pos_right hk hd
+      show wlog (v n) + ((k : ℕ) : Surreal) * wlog (a - s n) <
+        wlog (v n) + ((k + 1 : ℕ) : Surreal) * wlog (a - s n)
+      linarith
+
 end Surreal
