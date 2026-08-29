@@ -253,4 +253,96 @@ theorem isCNFLength_monomial {r : ℝ} (hr : r ≠ 0) (y : Surreal.{u}) :
     rw [cnfRes_zero]
     exact hne
 
+/-! ### Finite base-`ω` expansions are their own normal forms -/
+
+section FiniteCNF
+
+open Finset
+
+variable {n : ℕ} {r : ℕ → ℝ} {y : ℕ → Surreal.{u}}
+
+private theorem lt_mk_sum' {c : ArchimedeanClass Surreal} (hc : c < ⊤) {s : Finset ℕ}
+    {u : ℕ → Surreal} (h : ∀ i ∈ s, c < ArchimedeanClass.mk (u i)) :
+    c < ArchimedeanClass.mk (∑ i ∈ s, u i) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    rw [Finset.sum_empty, show ArchimedeanClass.mk (0 : Surreal) = ⊤ from
+      ArchimedeanClass.mk_eq_top_iff.2 rfl]
+    exact hc
+  | cons a s ha ih =>
+    rw [Finset.sum_cons]
+    exact lt_mk_add' (h a (Finset.mem_cons_self ..))
+      (ih fun i hi ↦ h i (Finset.mem_cons_of_mem hi))
+
+/-- In a finite expansion with strictly decreasing exponents, each term strictly dominates
+the tail after it. -/
+private theorem mk_head_lt_tail (hy : ∀ i j, i < j → j < n → y j < y i)
+    (hr : ∀ i < n, r i ≠ 0) {k : ℕ} (hk : k < n) :
+    ArchimedeanClass.mk ((r k : Surreal.{u}) * ω^ (y k)) <
+      ArchimedeanClass.mk (∑ i ∈ Ico (k + 1) n, (r i : Surreal.{u}) * ω^ (y i)) := by
+  have hne : (r k : Surreal.{u}) * ω^ (y k) ≠ 0 :=
+    mul_ne_zero (by simpa using hr k hk) (wpow_pos _).ne'
+  refine lt_mk_sum' (lt_top_iff_ne_top.2 fun h ↦ hne (ArchimedeanClass.mk_eq_top_iff.1 h))
+    fun i hi ↦ ?_
+  obtain ⟨hik, hin⟩ := mem_Ico.1 hi
+  rw [ArchimedeanClass.mk_mul, ArchimedeanClass.mk_mul, mk_realCast (hr k hk),
+    mk_realCast (hr i hin), zero_add, zero_add]
+  exact archimedeanClassMk_wpow_strictAnti (hy k i (Nat.lt_of_succ_le hik) hin)
+
+/-- The residuals of a finite expansion are its tails: extracting `k` terms leaves
+`Σ_{k≤i<n} r_i·ω^(y_i)`. -/
+theorem cnfRes_finsum (hy : ∀ i j, i < j → j < n → y j < y i) (hr : ∀ i < n, r i ≠ 0)
+    (k : ℕ) (hkn : k ≤ n) :
+    cnfRes (∑ i ∈ range n, (r i : Surreal.{u}) * ω^ (y i)) k =
+      ∑ i ∈ Ico k n, (r i : Surreal.{u}) * ω^ (y i) := by
+  induction k with
+  | zero => rw [Nat.cast_zero, cnfRes_zero, range_eq_Ico]
+  | succ k ih =>
+    have hk : k < n := Nat.lt_of_succ_le hkn
+    rw [Nat.cast_add_one, cnfRes_add_one, ih hk.le,
+      sum_eq_sum_Ico_succ_bot hk (fun i ↦ (r i : Surreal.{u}) * ω^ (y i)),
+      leadingTerm_add_eq_left (vlt_def.2 (mk_head_lt_tail hy hr hk)),
+      leadingTerm_monomial]
+    ring
+
+/-- The extracted terms of a finite expansion are its own terms. -/
+theorem cnfTerm_finsum (hy : ∀ i j, i < j → j < n → y j < y i) (hr : ∀ i < n, r i ≠ 0)
+    {k : ℕ} (hk : k < n) :
+    cnfTerm (∑ i ∈ range n, (r i : Surreal.{u}) * ω^ (y i)) k =
+      (r k : Surreal.{u}) * ω^ (y k) := by
+  rw [cnfTerm, cnfRes_finsum hy hr k hk.le,
+    sum_eq_sum_Ico_succ_bot hk (fun i ↦ (r i : Surreal.{u}) * ω^ (y i)),
+    leadingTerm_add_eq_left (vlt_def.2 (mk_head_lt_tail hy hr hk)),
+    leadingTerm_monomial]
+
+/-- **Finite base-`ω` expansions have normal form of length exactly `n`**: the extraction
+of `Σ_{i<n} r_i·ω^(y_i)` (strictly decreasing exponents, nonzero coefficients) recovers
+the expansion term by term and dies at stage `n`. -/
+theorem isCNFLength_finsum (hy : ∀ i j, i < j → j < n → y j < y i)
+    (hr : ∀ i < n, r i ≠ 0) :
+    IsCNFLength (∑ i ∈ range n, (r i : Surreal.{u}) * ω^ (y i)) n := by
+  constructor
+  · rw [cnfRes_finsum hy hr n le_rfl, Ico_self, sum_empty]
+  · intro β hβ
+    obtain ⟨k, rfl⟩ := Ordinal.lt_omega0.1 (hβ.trans (Ordinal.natCast_lt_omega0 n))
+    have hk : k < n := by exact_mod_cast hβ
+    rw [cnfRes_finsum hy hr k hk.le,
+      sum_eq_sum_Ico_succ_bot hk (fun i ↦ (r i : Surreal.{u}) * ω^ (y i))]
+    intro h0
+    have hneg := eq_neg_of_add_eq_zero_right h0
+    have hlt := mk_head_lt_tail hy hr hk
+    rw [hneg, ArchimedeanClass.mk_neg] at hlt
+    exact lt_irrefl _ hlt
+
+/-- **The finite normal-form representation theorem**: every finite base-`ω` expansion
+*is* the canonical transfinite sum of its own extracted terms — the finite-support case of
+Conway normal form, complete. -/
+theorem finsum_eq_hahnSumO (hy : ∀ i j, i < j → j < n → y j < y i)
+    (hr : ∀ i < n, r i ≠ 0) :
+    (∑ i ∈ range n, (r i : Surreal.{u}) * ω^ (y i)) =
+      hahnSumO (cnfTerm (∑ i ∈ range n, (r i : Surreal.{u}) * ω^ (y i))) n :=
+  (isCNFLength_finsum hy hr).eq_hahnSumO
+
+end FiniteCNF
+
 end Surreal
