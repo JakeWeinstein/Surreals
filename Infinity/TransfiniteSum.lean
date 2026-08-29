@@ -465,4 +465,36 @@ theorem hahnSumO_omega0 {t : Ordinal.{u} → Surreal.{u}}
     simplestBtwnD_of_lt (sumLo_lt_sumHi (ht.natCast_succ le_rfl))]
   rfl
 
+/-! ### The canonical sum depends only on the prefix -/
+
+private theorem hahnSumO_congr_aux (t t' : Ordinal.{u} → Surreal.{u}) (α : Ordinal.{u}) :
+    (∀ β < α, t β = t' β) → hahnSumO t α = hahnSumO t' α := by
+  induction α using Ordinal.limitRecOn with
+  | zero =>
+    intro _
+    rw [hahnSumO_zero, hahnSumO_zero]
+  | add_one δ ih =>
+    intro h
+    rw [hahnSumO_add_one, hahnSumO_add_one,
+      ih fun β hβ ↦ h β (hβ.trans (lt_add_one_iff.2 le_rfl)),
+      h δ (lt_add_one_iff.2 le_rfl)]
+  | limit γ hγ ih =>
+    intro h
+    have hlo : sumLoO t γ = sumLoO t' γ := by
+      unfold sumLoO
+      exact iSup_congr fun β ↦ by
+        rw [ih β.1 β.2 fun δ hδ ↦ h δ (hδ.trans β.2), h β.1 β.2]
+    have hhi : sumHiO t γ = sumHiO t' γ := by
+      unfold sumHiO
+      exact iInf_congr fun β ↦ by
+        rw [ih β.1 β.2 fun δ hδ ↦ h δ (hδ.trans β.2), h β.1 β.2]
+    rw [hahnSumO_of_isSuccLimit t hγ, hahnSumO_of_isSuccLimit t' hγ, hlo, hhi]
+
+/-- **The canonical sum depends only on the terms below `α`**: `hahnSumO t α` is a
+well-defined function of the length-`α` prefix of `t`, so the total-function signature
+loses no generality over `Π β : Iio α, Surreal`. -/
+theorem hahnSumO_congr {t t' : Ordinal.{u} → Surreal.{u}} {α : Ordinal.{u}}
+    (h : ∀ β < α, t β = t' β) : hahnSumO t α = hahnSumO t' α :=
+  hahnSumO_congr_aux t t' α h
+
 end Surreal
