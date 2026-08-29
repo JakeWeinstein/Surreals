@@ -1,4 +1,5 @@
 import Infinity.BirthdayHahn
+import Infinity.CauchyProduct
 import Mathlib.Data.Nat.Pairing
 
 /-!
@@ -131,6 +132,36 @@ theorem isHahnSum_iff_forall_mk_le (hx : IsHahnSum t x) :
     show ArchimedeanClass.mk (t n) ≤ ArchimedeanClass.mk (y - partialSum t n)
     rw [hsplit]
     exact le_trans (le_min (h n) (hx n)) (ArchimedeanClass.min_le_mk_add ..)
+
+/-- **The resolution of domination semantics is the finest attained scale**: if every term
+of the series has magnitude at least scale `c` (class at most `c`) and some term sits
+exactly at scale `c`, then the consistent values are exactly `x + {w | c ≤ mk w}` — the
+full ball of magnitudes at most scale `c`. In the Archimedean-flat regime the
+underdetermination is thus galaxy-sized, not halo-sized: the special case `c = 0` is the
+St. Petersburg collapse `isHahnSum_one_iff` below. -/
+theorem isHahnSum_iff_of_le_of_attained {c : ArchimedeanClass Surreal}
+    (hle : ∀ n, ArchimedeanClass.mk (t n) ≤ c) (hex : ∃ n, ArchimedeanClass.mk (t n) = c)
+    (hx : IsHahnSum t x) :
+    IsHahnSum t y ↔ c ≤ ArchimedeanClass.mk (y - x) := by
+  rw [isHahnSum_iff_forall_mk_le hx]
+  constructor
+  · intro h
+    obtain ⟨n, hn⟩ := hex
+    exact hn ▸ h n
+  · intro h n
+    exact (hle n).trans h
+
+/-- **Finite lotteries are fully determined**: if some outcome has probability zero — in
+particular, if only finitely many outcomes are live — then any two domination-consistent
+expected utilities coincide (both equal the partial expected utility at that outcome, by
+`IsHahnSum.eq_partialSum_of_apply_eq_zero`). Surreal expected utility is a conservative
+extension of classical finite expected utility, and underdetermination is strictly an
+infinite-lottery phenomenon. -/
+theorem eq_of_isHahnSum_expectation_of_prob_zero {p u : ℕ → Surreal} {N : ℕ}
+    (h0 : p N = 0) {x y : Surreal} (hx : IsHahnSum (expectationSeries p u) x)
+    (hy : IsHahnSum (expectationSeries p u) y) : x = y := by
+  have hz : expectationSeries p u N = 0 := by rw [expectationSeries_apply, h0, zero_mul]
+  rw [hx.eq_partialSum_of_apply_eq_zero hz, hy.eq_partialSum_of_apply_eq_zero hz]
 
 /-- **The replacement construction** (Pruss's underdetermination move, verified): perturbing
 a consistent value by anything dominated by every term of the series yields another
