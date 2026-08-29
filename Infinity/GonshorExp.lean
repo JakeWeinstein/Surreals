@@ -131,4 +131,147 @@ theorem expPartial_odd_neg {y : Surreal} (hy : y < 0) (hinf : ¬ IsFinite y) (k 
   rw [abs_of_neg htneg] at habs
   linarith
 
+/-! ### Cofinal left-cuts are equal
+
+The simplicity-free cofinality bridge: two surreal cuts with no right options and mutually
+`≤`-cofinal left sets are the *same* surreal. Descends `IGame.equiv_of_exists_le` through
+the `Game` and `Surreal` quotients. -/
+
+private theorem game_image_mk_out (S : Set Game) : Game.mk '' (Game.out '' S) = S := by
+  rw [Set.image_image]
+  simp only [Game.out_eq, Set.image_id']
+
+/-- `OfSets` congruence over set equality (the `Small` and validity arguments are
+propositional, so this is proof irrelevance). -/
+private theorem game_ofSets_congr {S S' T T' : Set Game} [Small.{u} S] [Small.{u} S']
+    [Small.{u} T] [Small.{u} T'] (hS : S = S') (hT : T = T') :
+    (!{S | T} : Game) = !{S' | T'} := by
+  subst hS; subst hT; rfl
+
+private theorem game_ofSets_left_rep (S : Set Game) [Small.{u} S] :
+    (!{S | ∅} : Game) = Game.mk !{Game.out '' S | (∅ : Set IGame)} := by
+  rw [Game.mk_ofSets]
+  exact game_ofSets_congr (game_image_mk_out S).symm (Set.image_empty _).symm
+
+private theorem game_ofSets_left_eq {S T : Set Game} [Small.{u} S] [Small.{u} T]
+    (hST : ∀ s ∈ S, ∃ t ∈ T, s ≤ t) (hTS : ∀ t ∈ T, ∃ s ∈ S, t ≤ s) :
+    (!{S | ∅} : Game) = !{T | ∅} := by
+  rw [game_ofSets_left_rep S, game_ofSets_left_rep T]
+  apply Game.mk_eq
+  apply equiv_of_exists_le
+  · rw [leftMoves_ofSets, leftMoves_ofSets]
+    rintro a ⟨s, hs, rfl⟩
+    obtain ⟨t, ht, hst⟩ := hST s hs
+    exact ⟨t.out, Set.mem_image_of_mem _ ht,
+      by rw [← Game.mk_le_mk, Game.out_eq, Game.out_eq]; exact hst⟩
+  · rw [rightMoves_ofSets]
+    rintro a ha
+    exact absurd ha (Set.notMem_empty a)
+  · rw [leftMoves_ofSets, leftMoves_ofSets]
+    rintro a ⟨t, ht, rfl⟩
+    obtain ⟨s, hs, hts⟩ := hTS t ht
+    exact ⟨s.out, Set.mem_image_of_mem _ hs,
+      by rw [← Game.mk_le_mk, Game.out_eq, Game.out_eq]; exact hts⟩
+  · rw [rightMoves_ofSets]
+    rintro a ha
+    exact absurd ha (Set.notMem_empty a)
+
+/-- **Mutually cofinal left-cuts are equal.** If every element of `A` is below some element
+of `B` and vice versa, then `!{A | ∅} = !{B | ∅}`. -/
+theorem ofSets_left_eq_of_cofinal {A B : Set Surreal} [Small.{u} A] [Small.{u} B]
+    (hAB : ∀ a ∈ A, ∃ b ∈ B, a ≤ b) (hBA : ∀ b ∈ B, ∃ a ∈ A, b ≤ a) :
+    (!{A | ∅} : Surreal) = !{B | ∅} := by
+  rw [← toGame_inj, toGame_ofSets, toGame_ofSets]
+  simp only [Set.image_empty]
+  apply game_ofSets_left_eq
+  · rintro s ⟨a, ha, rfl⟩
+    obtain ⟨b, hb, hab⟩ := hAB a ha
+    exact ⟨toGame b, Set.mem_image_of_mem _ hb, toGame_le_iff.2 hab⟩
+  · rintro t ⟨b, hb, rfl⟩
+    obtain ⟨a, ha, hba⟩ := hBA b hb
+    exact ⟨toGame a, Set.mem_image_of_mem _ ha, toGame_le_iff.2 hba⟩
+
+/-! ### `ω^` of a left-cut -/
+
+private theorem numeric_ofSets_out_left (A : Set Surreal) [Small.{u} A] :
+    Numeric (!{Surreal.out '' A | (∅ : Set IGame)}) := by
+  refine Numeric.mk (fun y hy z hz ↦ ?_) (fun p y hy ↦ ?_)
+  · rw [rightMoves_ofSets] at hz
+    exact absurd hz (Set.notMem_empty z)
+  · cases p with
+    | left =>
+      rw [moves_ofSets] at hy
+      obtain ⟨a, _, rfl⟩ := hy
+      infer_instance
+    | right =>
+      rw [moves_ofSets] at hy
+      exact absurd hy (Set.notMem_empty y)
+
+/-- Every left-cut of surreals is represented by the corresponding left-cut of
+representatives. -/
+private theorem surreal_ofSets_left_rep (A : Set Surreal) [Small.{u} A] :
+    (!{A | ∅} : Surreal) =
+      @Surreal.mk (!{Surreal.out '' A | (∅ : Set IGame)}) (numeric_ofSets_out_left A) := by
+  rw [← toGame_inj, toGame_ofSets, toGame_mk]
+  refine (game_ofSets_congr rfl (Set.image_empty _)).trans ?_
+  rw [game_ofSets_left_rep]
+  apply Game.mk_eq
+  apply equiv_of_exists_le
+  · rw [leftMoves_ofSets, leftMoves_ofSets]
+    rintro a ⟨s, ⟨x, hx, rfl⟩, rfl⟩
+    refine ⟨x.out, Set.mem_image_of_mem _ hx, ?_⟩
+    rw [← Game.mk_le_mk, Game.out_eq, gameMk_out]
+  · rw [rightMoves_ofSets]
+    rintro a ha
+    exact absurd ha (Set.notMem_empty a)
+  · rw [leftMoves_ofSets, leftMoves_ofSets]
+    rintro a ⟨x, hx, rfl⟩
+    refine ⟨(toGame x).out, Set.mem_image_of_mem _ (Set.mem_image_of_mem _ hx), ?_⟩
+    rw [← Game.mk_le_mk, Game.out_eq, gameMk_out]
+  · rw [rightMoves_ofSets]
+    rintro a ha
+    exact absurd ha (Set.notMem_empty a)
+
+/-- **The `ω`-map on a left-cut**: CG's genetic definition of `ω^ ·` computed at the
+`Surreal` level. The left options of `ω^ !{A | ∅}` are `0` together with all positive
+dyadic multiples of `ω`-powers of elements of `A`, and there are no right options. -/
+theorem wpow_ofSets (A : Set Surreal) [Small.{u} A] :
+    ω^ (!{A | ∅} : Surreal) =
+      !{insert 0 (Set.image2 (fun (r : Dyadic) (x : Surreal) ↦ (r : Surreal) * ω^ x)
+        (Set.Ioi 0) A) | ∅} := by
+  haveI := numeric_ofSets_out_left A
+  haveI := numeric_ofSets_out_left (insert 0 (Set.image2 (fun (r : Dyadic) (x : Surreal) ↦
+    (r : Surreal) * ω^ x) (Set.Ioi 0) A))
+  rw [surreal_ofSets_left_rep A, ← Surreal.mk_wpow,
+    surreal_ofSets_left_rep (insert 0 (Set.image2 (fun (r : Dyadic) (x : Surreal) ↦
+      (r : Surreal) * ω^ x) (Set.Ioi 0) A))]
+  apply Surreal.mk_eq
+  apply equiv_of_exists_le
+  · rw [leftMoves_wpow, leftMoves_ofSets, leftMoves_ofSets]
+    rintro a (rfl | ⟨r, hr, y, ⟨x, hx, rfl⟩, rfl⟩)
+    · refine ⟨Surreal.out 0, Set.mem_image_of_mem _ (Set.mem_insert 0 _), ?_⟩
+      rw [← Surreal.mk_le_mk, Surreal.out_eq]
+      simp
+    · refine ⟨Surreal.out ((r : Surreal) * ω^ x),
+        Set.mem_image_of_mem _ (Set.mem_insert_of_mem _
+          (Set.mem_image2_of_mem hr hx)), ?_⟩
+      rw [← Surreal.mk_le_mk, Surreal.out_eq, Surreal.mk_mul, Surreal.mk_dyadic,
+        Surreal.mk_wpow, Surreal.out_eq]
+  · rw [rightMoves_wpow, rightMoves_ofSets, Set.image2_empty_right]
+    rintro a ha
+    exact absurd ha (Set.notMem_empty a)
+  · rw [leftMoves_wpow, leftMoves_ofSets, leftMoves_ofSets]
+    rintro a ⟨b, hb, rfl⟩
+    rcases hb with rfl | ⟨r, hr, x, hx, rfl⟩
+    · refine ⟨0, Set.mem_insert 0 _, ?_⟩
+      rw [← Surreal.mk_le_mk, Surreal.out_eq]
+      simp
+    · refine ⟨(r : IGame) * ω^ (Surreal.out x),
+        Set.mem_insert_of_mem _ (Set.mem_image2_of_mem hr (Set.mem_image_of_mem _ hx)), ?_⟩
+      rw [← Surreal.mk_le_mk, Surreal.out_eq, Surreal.mk_mul, Surreal.mk_dyadic,
+        Surreal.mk_wpow, Surreal.out_eq]
+  · rw [rightMoves_ofSets]
+    rintro a ha
+    exact absurd ha (Set.notMem_empty a)
+
 end Surreal
