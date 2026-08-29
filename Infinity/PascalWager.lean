@@ -23,7 +23,9 @@ The probability weights are the telescoping series `pascalProb n = ω⁻ⁿ − 
 * `isHahnSum_pascalProb_one` / `hahnSum_pascalProb_eq_one` : **total probability one** —
   the canonical transfinite sum of the weights is exactly `1`. Countable additivity fails
   for limit-based summation on `No` (`Infinity.Limits`), but its domination-semantics
-  replacement holds on the nose.
+  replacement holds on the nose. Even here underdetermination bites and is answered:
+  rival totals exist, all strictly more complex than `1`
+  (`exists_rival_total_probability`).
 
 Wagering yields utility `ω²` in the salvation state (probability `≈ 1/ω`) and `10`
 elsewhere; refusing yields `11` in the mundane state and `10` elsewhere. Expectation series
@@ -173,6 +175,17 @@ domination, but on the nose, by the exact telescoping evaluation of
 `Infinity.BirthdayHahn`. -/
 theorem hahnSum_pascalProb_eq_one : hahnSum pascalProb_strict_dominating = 1 :=
   hahnSum_telescoping_eq_one
+
+/-- **Even normalization is underdetermined — and answered**: the domination constraints
+admit total probabilities other than `1` (each within all scales of `1`), but every rival
+is strictly more complex than `1`, which is the canonical total. Pruss's
+underdetermination phenomenon applies already to the normalization of the probability
+weights themselves; birthday-simplicity selects the value the philosophy expects. -/
+theorem exists_rival_total_probability :
+    ∃ q, IsHahnSum pascalProb q ∧ q ≠ 1 ∧ (1 : Surreal.{0}).birthday < q.birthday := by
+  obtain ⟨q, hq, hne, hb⟩ := exists_isHahnSum_ne_hahnSum pascalProb_strict_dominating
+  rw [hahnSum_pascalProb_eq_one] at hne hb
+  exact ⟨q, hq, hne, hb⟩
 
 /-! ### The two acts and their expectation series -/
 

@@ -68,6 +68,7 @@ with the flagship Pascalian conclusions proved *independently of the selection*.
 | Dominance reasoning is respected by surreal EU | Chen–Rubio §3.2, §4 ("our theory respects dominance") | **theorem** at countable scope | `pos_of_isHahnSum`, `lt_of_isHahnSum_of_head_lt` (Expectation); `isHahnSum_refuse_lt_isHahnSum_wager` (PascalWager) |
 | A fair-lottery-style credence can be positive yet infinitesimal (regularity) | Chen–Rubio §3.3.1 (Rene); Benci–Horsten–Wenmackers; Gallow | **theorem** (existence in No, in a working lottery) | `pascalProb_pos`, `pascalProb_infinitesimal`, `pascalProb_le_one` (PascalWager) |
 | A countable lottery can have total probability exactly 1 with all-positive weights | Gallow's desideratum; NAP-style normalization | **theorem** | `isHahnSum_pascalProb_one`, `hahnSum_pascalProb_eq_one` (PascalWager, via `hahnSum_telescoping_eq_one`) |
+| Underdetermination afflicts even the normalization of the weights — and simplicity answers it there too | Pruss's argument, applied to probability values | **theorem** | `exists_rival_total_probability` (PascalWager): rival totals exist, each strictly more complex than the canonical `1` |
 | Pascal's Wager: wagering has expected utility beyond every real, even at infinitesimal credence | Chen–Rubio §4 (finite-state version) | **theorem** at countable scope, *selection-independent* | `forall_realCast_lt_of_isHahnSum_wager`, `forall_realCast_lt_wagerValue` (PascalWager) |
 | The pure wager beats every mixed strategy (Hájek's objection dissolved by non-absorption) | Chen–Rubio §4.1; Hájek 2003 | **theorem**, both for value-mixtures and for the mixed *act as a lottery* | `mixed_lt_wagerValue`, `forall_realCast_lt_mixed` (values); `isHahnSum_mix_lt_isHahnSum_wager`, `forall_realCast_lt_of_isHahnSum_mix`, `mixValue_lt_wagerValue`, `forall_realCast_lt_mixValue` (the mixed lottery itself, across both entire halos, no linearity assumption) (PascalWager) |
 | St. Petersburg resists this treatment | Chen–Rubio's conclusion (deferred); Hájek–Nover literature | **theorem** (negative) | `isHahnSum_one_iff` (Expectation), `stPetersburg_collapse` (PascalWager) |
@@ -220,6 +221,7 @@ cases as mathematics/philosophy:
 `Infinity/PascalWager.lean` — the flagship:
 `pascalProb` (+ `_pos`, `_le_one`, `_infinitesimal`, `_strict_dominating`),
 `isHahnSum_pascalProb_one`, `hahnSum_pascalProb_eq_one`,
+`exists_rival_total_probability`,
 `wagerUtility`, `refuseUtility`, `wagerSeries`, `refuseSeries`, `wagerSorted`
 (+ closed forms and `wagerSorted_strict_dominating`),
 `not_tendstoSurreal_partialSum_wager`,
@@ -262,7 +264,12 @@ Load-bearing imports from earlier layers: `IsHahnSum`, `partialSum`,
 4. **Fair lotteries**: investigate whether any principled refinement (e.g. Gallow-style
    symmetry constraints, or an Ω-limit analogue inside **No**) selects values on flat
    series where domination semantics provably cannot.
-5. **Engage the literature**: the results in §3 items 3–5 are, we believe, statable as a
+5. **More case studies by the same pattern**: a Many-Gods instance (equal salvation
+   utilities, credence scales `1/ω` vs `1/ω²`: the likelier god's wager beats the other
+   across both halos — Chen–Rubio §4.2's credence-dependence as a theorem) is a
+   mechanical variation on the `refuseSeries` treatment; degrees-of-glory matrices
+   (their §4.4) likewise.
+6. **Engage the literature**: the results in §3 items 3–5 are, we believe, statable as a
    short philosophy-journal paper (theorems in an appendix, Lean artifact cited);
    Chen–Rubio's promised sequel apparently never appeared, and this fills that gap from
    the formal side.
