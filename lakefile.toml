@@ -1,0 +1,21 @@
+name = "infinity"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["Infinity"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+relaxedAutoImplicit = false
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "5eec30bc56ed5a23be2e27c544a949ba0bceddeb"
+
+[[require]]
+name = "CombinatorialGames"
+git = "https://github.com/vihdzp/combinatorial-games.git"
+rev = "99a469a2e02fd9fab9a717efe27f7fc84b880bbb"
+
+[[lean_lib]]
+name = "Infinity"
