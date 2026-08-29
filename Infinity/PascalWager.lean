@@ -45,17 +45,20 @@ which for the wager means transposing the first two outcomes (`wagerSorted`).
 * `isHahnSum_refuse_lt_isHahnSum_wager` : **dominance**: every consistent value of
   refusing is strictly below every consistent value of wagering; in particular
   `refuseValue_lt_wagerValue`.
-* `mixed_lt_wagerValue` : **the pure wager beats every real mixture** (Hájek's
-  mixed-strategy objection, resolved as in Chen–Rubio: `γ·E(wager) + (1−γ)·E(refuse) <
-  E(wager)` for every real `γ ∈ (0,1)`) — while `forall_realCast_lt_mixed` shows every
-  such mixture still exceeds every real. Mixing loses to purity yet remains transfinitely
-  valuable, exactly the surreal resolution.
-
-(The mixtures here are formed at the level of canonical values. Whether the canonical
-expectation operator is itself additive across lotteries — so that value-mixtures coincide
-with canonical expectations of mixed lotteries — is precisely the open birthday-additivity
-question isolated in `Infinity.BirthdayHahn` (`hahnSum_add_eq_iff`); at the level of
-consistent values it holds by `IsHahnSum.add`.)
+* `mixed_lt_wagerValue` / `forall_realCast_lt_mixed` : mixtures of the canonical *values*
+  are dominated by purity yet remain transfinite.
+* `isHahnSum_mix_lt_isHahnSum_wager` / `forall_realCast_lt_of_isHahnSum_mix` : the same,
+  for the mixed **act evaluated as a lottery of its own** (`mixUtility`, `mixSorted`):
+  Hájek's mixed strategy — wager iff a `γ`-biased coin lands heads — is a countable
+  lottery with a strictly dominating expectation series (`mixSorted_strict_dominating`),
+  every consistent value of which lies strictly below every consistent value of pure
+  wagering while still exceeding every real; `mixValue` is its canonical expected
+  utility (`mixValue_lt_wagerValue`, `forall_realCast_lt_mixValue`). Mixing loses to
+  purity yet remains transfinitely valuable — the two halves of the surreal resolution of
+  the mixed-strategy objection, with **no appeal to linearity of the expectation
+  operator** (whether canonical expectation is additive across lotteries remains the open
+  birthday question `hahnSum_add_eq_iff` of `Infinity.BirthdayHahn`; nothing here needs
+  it).
 
 ## The honest boundary: a fully surreal St. Petersburg game
 
@@ -198,10 +201,10 @@ the transposition of outcomes `0` and `1`. -/
 def wagerSorted : ℕ → Surreal.{0} :=
   fun n ↦ wagerSeries (Equiv.swap 0 1 n)
 
-theorem wagerSorted_zero : wagerSorted 0 = ω^ (1 : Surreal) - 1 := by
-  rw [wagerSorted, Equiv.swap_apply_left, wagerSeries, expectationSeries_apply,
-    wagerUtility, if_pos rfl, pascalProb]
-  rw [eps0_def]
+/-- The salvation term: probability `≈ 1/ω` times utility `ω²` is `ω − 1`. -/
+theorem pascalProb_one_mul_wpow_sq :
+    pascalProb 1 * (ω^ (1 : Surreal)) ^ 2 = ω^ (1 : Surreal) - 1 := by
+  rw [pascalProb, eps0_def]
   have h0 : (ω^ (1 : Surreal)) ≠ 0 := hW_ne_zero
   have hinv : (ω^ (1 : Surreal)) * (ω^ (1 : Surreal))⁻¹ = 1 := mul_inv_cancel₀ h0
   calc ((ω^ (1 : Surreal))⁻¹ ^ 1 - (ω^ (1 : Surreal))⁻¹ ^ (1 + 1)) * (ω^ (1 : Surreal)) ^ 2
@@ -209,6 +212,11 @@ theorem wagerSorted_zero : wagerSorted 0 = ω^ (1 : Surreal) - 1 := by
           (ω^ (1 : Surreal) * (ω^ (1 : Surreal))⁻¹) *
             (ω^ (1 : Surreal) * (ω^ (1 : Surreal))⁻¹) := by ring
     _ = ω^ (1 : Surreal) - 1 := by rw [hinv, one_mul, mul_one]
+
+theorem wagerSorted_zero : wagerSorted 0 = ω^ (1 : Surreal) - 1 := by
+  rw [wagerSorted, Equiv.swap_apply_left, wagerSeries, expectationSeries_apply,
+    wagerUtility, if_pos rfl]
+  exact pascalProb_one_mul_wpow_sq
 
 theorem wagerSorted_one : wagerSorted 1 = 10 * pascalProb 0 := by
   rw [wagerSorted, Equiv.swap_apply_right, wagerSeries, expectationSeries_apply,
@@ -224,12 +232,16 @@ private theorem mk_ten_mul_pascalProb (n : ℕ) :
       n • ArchimedeanClass.mk ε₀ := by
   rw [ArchimedeanClass.mk_mul, ArchimedeanClass.mk_ofNat, zero_add, mk_pascalProb]
 
-private theorem mk_wagerSorted_zero_neg : ArchimedeanClass.mk (wagerSorted 0) < 0 := by
-  rw [wagerSorted_zero]
+private theorem mk_wpow_sub_one_neg :
+    ArchimedeanClass.mk (ω^ (1 : Surreal.{0}) - 1) < 0 := by
   refine mk_neg_of_forall_natCast_lt fun j ↦ ?_
   have h := natCast_lt_wpow_one (j + 1)
   push_cast at h
   linarith
+
+private theorem mk_wagerSorted_zero_neg : ArchimedeanClass.mk (wagerSorted 0) < 0 := by
+  rw [wagerSorted_zero]
+  exact mk_wpow_sub_one_neg
 
 /-- The sorted wager series is strictly dominating: salvation at scale `ω`, the mundane
 world at scale `1`, and the tail at scales `ω⁻², ω⁻³, …`. -/
@@ -457,6 +469,211 @@ theorem forall_realCast_lt_mixed {γ : ℝ} (h0 : 0 < γ) (h1 : γ < 1) (r : ℝ
     rw [show (0 : Surreal) = ((0 : ℝ) : Surreal) by norm_cast, Real.toSurreal_lt_iff]
     linarith
   nlinarith
+
+/-! ### Mixture lotteries: the mixed strategy as a lottery of its own
+
+The theorems above mix the two canonical *values*. The stronger form of Hájek's objection
+concerns the mixed *act*: flip a `γ`-biased coin and wager on heads. That act is itself a
+countable lottery — same outcomes, same probabilities, outcome-wise mixed utilities
+`γ·u_wager + (1−γ)·u_refuse` — and the theorems below evaluate it directly: its
+expectation series strictly dominates, **every** domination-consistent value of the mixed
+lottery lies strictly below **every** consistent value of pure wagering, and every such
+value still exceeds every real. No appeal to linearity of the canonical expectation is
+needed at any point. -/
+
+section Mixture
+
+variable {γ : ℝ}
+
+/-- The outcome-wise utilities of the `γ`-mixed act: wager with probability `γ`, refuse
+otherwise. -/
+def mixUtility (γ : ℝ) : ℕ → Surreal.{0} :=
+  fun n ↦ (γ : Surreal) * wagerUtility n + ((1 - γ : ℝ) : Surreal) * refuseUtility n
+
+/-- The expectation series of the mixed act, scale-sorted like the wager's (the salvation
+term still leads). -/
+def mixSorted (γ : ℝ) : ℕ → Surreal.{0} :=
+  fun n ↦ expectationSeries pascalProb (mixUtility γ) (Equiv.swap 0 1 n)
+
+private theorem cast_one_sub (γ : ℝ) : ((1 - γ : ℝ) : Surreal) = 1 - (γ : Surreal) := by
+  rw [Real.toSurreal_sub, Real.toSurreal_one]
+
+private theorem cast_pos (h : 0 < γ) : (0 : Surreal) < (γ : Surreal) := by
+  rw [show (0 : Surreal) = ((0 : ℝ) : Surreal) by norm_cast, Real.toSurreal_lt_iff]
+  exact h
+
+private theorem cast_lt_one (h : γ < 1) : (γ : Surreal) < 1 := by
+  rw [show (1 : Surreal) = ((1 : ℝ) : Surreal) by norm_cast, Real.toSurreal_lt_iff]
+  exact h
+
+private theorem mixSorted_zero (γ : ℝ) :
+    mixSorted γ 0 = (γ : Surreal) * (ω^ (1 : Surreal) - 1) +
+      ((1 - γ : ℝ) : Surreal) * (10 * pascalProb 1) := by
+  show expectationSeries pascalProb (mixUtility γ) (Equiv.swap 0 1 0) = _
+  rw [Equiv.swap_apply_left, expectationSeries_apply, mixUtility, wagerUtility,
+    refuseUtility, if_pos rfl, if_neg (by omega), ← pascalProb_one_mul_wpow_sq]
+  ring
+
+private theorem mixSorted_one (γ : ℝ) :
+    mixSorted γ 1 = pascalProb 0 * (11 - (γ : Surreal)) := by
+  show expectationSeries pascalProb (mixUtility γ) (Equiv.swap 0 1 1) = _
+  rw [Equiv.swap_apply_right, expectationSeries_apply, mixUtility, wagerUtility,
+    refuseUtility, if_neg (by omega), if_pos rfl, cast_one_sub]
+  ring
+
+private theorem mixSorted_add_two (γ : ℝ) (n : ℕ) :
+    mixSorted γ (n + 2) = 10 * pascalProb (n + 2) := by
+  show expectationSeries pascalProb (mixUtility γ) (Equiv.swap 0 1 (n + 2)) = _
+  rw [Equiv.swap_apply_of_ne_of_ne (by omega) (by omega), expectationSeries_apply,
+    mixUtility, wagerUtility, refuseUtility, if_neg (by omega), if_neg (by omega),
+    cast_one_sub]
+  ring
+
+private theorem cast_eleven_sub (γ : ℝ) :
+    (11 : Surreal) - (γ : Surreal) = ((11 - γ : ℝ) : Surreal) := by
+  rw [Real.toSurreal_sub]
+  norm_num
+
+private theorem mk_mixSorted_one (h1 : γ < 1) :
+    ArchimedeanClass.mk (mixSorted γ 1) = 0 := by
+  rw [mixSorted_one, ArchimedeanClass.mk_mul, mk_pascalProb, zero_nsmul, zero_add,
+    cast_eleven_sub]
+  exact mk_realCast (by linarith : (0 : ℝ) < 11 - γ).ne'
+
+private theorem mk_mixSorted_zero_neg (h0 : 0 < γ) (h1 : γ < 1) :
+    ArchimedeanClass.mk (mixSorted γ 0) < 0 := by
+  rw [mixSorted_zero]
+  have hA : ArchimedeanClass.mk ((γ : Surreal) * (ω^ (1 : Surreal) - 1)) < 0 := by
+    rw [ArchimedeanClass.mk_mul, mk_realCast h0.ne', zero_add]
+    exact mk_wpow_sub_one_neg
+  have hB : (0 : ArchimedeanClass Surreal) <
+      ArchimedeanClass.mk (((1 - γ : ℝ) : Surreal) * (10 * pascalProb 1)) := by
+    rw [ArchimedeanClass.mk_mul, mk_realCast (by linarith : (0 : ℝ) < 1 - γ).ne',
+      zero_add, mk_ten_mul_pascalProb]
+    exact nsmul_mk_eps0_pos (by omega)
+  rw [ArchimedeanClass.mk_add_eq_mk_left (hA.trans hB)]
+  exact hA
+
+/-- The mixed lottery's expectation series is strictly dominating (for genuinely mixed
+`γ`). -/
+theorem mixSorted_strict_dominating (h0 : 0 < γ) (h1 : γ < 1) (n : ℕ) :
+    ArchimedeanClass.mk (mixSorted γ n) <
+      ArchimedeanClass.mk (mixSorted γ (n + 1)) := by
+  match n with
+  | 0 =>
+    rw [show (0 + 1 : ℕ) = 1 from rfl, mk_mixSorted_one h1]
+    exact mk_mixSorted_zero_neg h0 h1
+  | 1 =>
+    rw [mk_mixSorted_one h1, show (1 + 1 : ℕ) = 0 + 2 from rfl, mixSorted_add_two,
+      mk_ten_mul_pascalProb]
+    exact nsmul_mk_eps0_pos (by omega)
+  | (m + 2) =>
+    rw [mixSorted_add_two, show (m + 2 + 1 : ℕ) = (m + 1) + 2 from rfl,
+      mixSorted_add_two]
+    exact mk_mul_lt_mk_mul_left (by norm_num) (pascalProb_strict_dominating (m + 2))
+
+private theorem head_gap_mix (γ : ℝ) :
+    wagerSorted 0 - mixSorted γ 0 =
+      ((1 - γ : ℝ) : Surreal) * ((ω^ (1 : Surreal) - 1) - 10 * pascalProb 1) := by
+  rw [wagerSorted_zero, mixSorted_zero, cast_one_sub]
+  ring
+
+private theorem ten_mul_pascalProb_one_lt :
+    (10 : Surreal.{0}) * pascalProb 1 < ω^ (1 : Surreal) - 1 := by
+  have hp := pascalProb_le_one 1
+  have hW : ((11 : ℕ) : Surreal) < ω^ (1 : Surreal) := natCast_lt_wpow_one 11
+  push_cast at hW
+  nlinarith [pascalProb_pos 1]
+
+private theorem mk_head_gap_mix_neg (h1 : γ < 1) :
+    ArchimedeanClass.mk (wagerSorted 0 - mixSorted γ 0) < 0 := by
+  rw [head_gap_mix γ, ArchimedeanClass.mk_mul,
+    mk_realCast (by linarith : (0 : ℝ) < 1 - γ).ne', zero_add,
+    ArchimedeanClass.mk_sub_eq_mk_left
+      (mk_wpow_sub_one_neg.trans_le (by
+        rw [mk_ten_mul_pascalProb]
+        exact (nsmul_mk_eps0_pos (by omega)).le))]
+  exact mk_wpow_sub_one_neg
+
+/-- **The pure wager beats the mixed act itself**: every domination-consistent expected
+utility of the `γ`-mixed lottery is strictly below every consistent expected utility of
+pure wagering, for every real bias `γ ∈ (0,1)`. This is Hájek's mixed strategy evaluated
+as a lottery in its own right, with no appeal to linearity of the expectation operator —
+the comparison holds across both entire underdetermination halos. -/
+theorem isHahnSum_mix_lt_isHahnSum_wager (_h0 : 0 < γ) (h1 : γ < 1)
+    {x y : Surreal.{0}} (hx : IsHahnSum (mixSorted γ) x)
+    (hy : IsHahnSum wagerSorted y) : x < y := by
+  have hg' : (0 : Surreal) < ((1 - γ : ℝ) : Surreal) := by
+    rw [show (0 : Surreal) = ((0 : ℝ) : Surreal) by norm_cast, Real.toSurreal_lt_iff]
+    linarith
+  refine lt_of_isHahnSum_of_head_lt hx hy ?_ ?_ ?_
+  · have hgap : 0 < wagerSorted 0 - mixSorted γ 0 := by
+      rw [head_gap_mix γ]
+      exact mul_pos hg' (sub_pos.2 ten_mul_pascalProb_one_lt)
+    linarith
+  · calc ArchimedeanClass.mk (wagerSorted 0 - mixSorted γ 0) < 0 :=
+        mk_head_gap_mix_neg h1
+      _ = ArchimedeanClass.mk (mixSorted γ 1) := (mk_mixSorted_one h1).symm
+  · calc ArchimedeanClass.mk (wagerSorted 0 - mixSorted γ 0) < 0 :=
+        mk_head_gap_mix_neg h1
+      _ = ArchimedeanClass.mk (wagerSorted 1) := by
+          rw [wagerSorted_one, mk_ten_mul_pascalProb, zero_nsmul]
+
+/-- **The mixed lottery still exceeds every real**: even diluted by a real coin, the mixed
+act's every consistent expected utility is beyond all finite prospects. Together with
+`isHahnSum_mix_lt_isHahnSum_wager` this is the complete surreal reply to the
+mixed-strategy objection, at the level of lotteries rather than values. -/
+theorem forall_realCast_lt_of_isHahnSum_mix (h0 : 0 < γ) (h1 : γ < 1)
+    {x : Surreal.{0}} (hx : IsHahnSum (mixSorted γ) x) (r : ℝ) : (r : Surreal) < x := by
+  -- the residual beyond the head is finite
+  have hres := hx 1
+  have hps : partialSum (mixSorted γ) 1 = mixSorted γ 0 := by
+    rw [partialSum, Finset.sum_range_one]
+  rw [hps, mk_mixSorted_one h1] at hres
+  obtain ⟨n, hn⟩ := isFinite_iff.1 hres
+  have habs := abs_le.1 hn
+  -- the head exceeds `r + n`: its dominant part is `γ·(ω − 1)`
+  obtain ⟨N, hN⟩ := exists_nat_gt ((r + n) / γ + 1)
+  have hchain : ((r + (n : ℝ)) / γ : ℝ) < (N : ℝ) - 1 := by linarith
+  have hcast : (((r + (n : ℝ)) / γ : ℝ) : Surreal) < (((N : ℝ) - 1 : ℝ) : Surreal) := by
+    rw [Real.toSurreal_lt_iff]
+    exact hchain
+  rw [Real.toSurreal_sub, Real.toSurreal_one, Real.toSurreal_natCast] at hcast
+  have hNW : ((N : ℕ) : Surreal) < ω^ (1 : Surreal) := natCast_lt_wpow_one N
+  have hdivW : (((r + (n : ℝ)) / γ : ℝ) : Surreal) < ω^ (1 : Surreal) - 1 := by
+    linarith
+  have hmul := mul_lt_mul_of_pos_left hdivW (cast_pos h0)
+  have hid : (γ : Surreal) * (((r + (n : ℝ)) / γ : ℝ) : Surreal) =
+      ((r + (n : ℝ) : ℝ) : Surreal) := by
+    rw [← Real.toSurreal_mul]
+    congr 1
+    have hγ : γ ≠ 0 := h0.ne'
+    field_simp
+  rw [hid, Real.toSurreal_add, Real.toSurreal_natCast] at hmul
+  -- assemble: x ≥ mixSorted γ 0 − n > γ(ω−1) − n > r
+  have hg' : (0 : Surreal) < ((1 - γ : ℝ) : Surreal) := by
+    rw [show (0 : Surreal) = ((0 : ℝ) : Surreal) by norm_cast, Real.toSurreal_lt_iff]
+    linarith
+  have hB : 0 < ((1 - γ : ℝ) : Surreal) * (10 * pascalProb 1) :=
+    mul_pos hg' (by nlinarith [pascalProb_pos 1])
+  have hhead := mixSorted_zero γ
+  linarith [habs.1]
+
+/-- **The canonical expected utility of the mixed act.** -/
+def mixValue (h0 : 0 < γ) (h1 : γ < 1) : Surreal.{0} :=
+  hahnSum (mixSorted_strict_dominating h0 h1)
+
+/-- The mixed act's canonical expected utility falls strictly below pure wagering's. -/
+theorem mixValue_lt_wagerValue (h0 : 0 < γ) (h1 : γ < 1) :
+    mixValue h0 h1 < wagerValue :=
+  isHahnSum_mix_lt_isHahnSum_wager h0 h1 (isHahnSum_hahnSum _) isHahnSum_wagerValue
+
+/-- The mixed act's canonical expected utility still exceeds every real. -/
+theorem forall_realCast_lt_mixValue (h0 : 0 < γ) (h1 : γ < 1) (r : ℝ) :
+    (r : Surreal) < mixValue h0 h1 :=
+  forall_realCast_lt_of_isHahnSum_mix h0 h1 (isHahnSum_hahnSum _) r
+
+end Mixture
 
 /-! ### The surreal St. Petersburg game -/
 

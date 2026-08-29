@@ -69,7 +69,7 @@ with the flagship Pascalian conclusions proved *independently of the selection*.
 | A fair-lottery-style credence can be positive yet infinitesimal (regularity) | Chen–Rubio §3.3.1 (Rene); Benci–Horsten–Wenmackers; Gallow | **theorem** (existence in No, in a working lottery) | `pascalProb_pos`, `pascalProb_infinitesimal`, `pascalProb_le_one` (PascalWager) |
 | A countable lottery can have total probability exactly 1 with all-positive weights | Gallow's desideratum; NAP-style normalization | **theorem** | `isHahnSum_pascalProb_one`, `hahnSum_pascalProb_eq_one` (PascalWager, via `hahnSum_telescoping_eq_one`) |
 | Pascal's Wager: wagering has expected utility beyond every real, even at infinitesimal credence | Chen–Rubio §4 (finite-state version) | **theorem** at countable scope, *selection-independent* | `forall_realCast_lt_of_isHahnSum_wager`, `forall_realCast_lt_wagerValue` (PascalWager) |
-| The pure wager beats every mixed strategy (Hájek's objection dissolved by non-absorption) | Chen–Rubio §4.1; Hájek 2003 | **theorem** (for real mixtures of the canonical values) | `mixed_lt_wagerValue`; and mixtures stay transfinite: `forall_realCast_lt_mixed` (PascalWager) |
+| The pure wager beats every mixed strategy (Hájek's objection dissolved by non-absorption) | Chen–Rubio §4.1; Hájek 2003 | **theorem**, both for value-mixtures and for the mixed *act as a lottery* | `mixed_lt_wagerValue`, `forall_realCast_lt_mixed` (values); `isHahnSum_mix_lt_isHahnSum_wager`, `forall_realCast_lt_of_isHahnSum_mix`, `mixValue_lt_wagerValue`, `forall_realCast_lt_mixValue` (the mixed lottery itself, across both entire halos, no linearity assumption) (PascalWager) |
 | St. Petersburg resists this treatment | Chen–Rubio's conclusion (deferred); Hájek–Nover literature | **theorem** (negative) | `isHahnSum_one_iff` (Expectation), `stPetersburg_collapse` (PascalWager) |
 
 ## 3. What is genuinely new here
@@ -139,10 +139,11 @@ cases as mathematics/philosophy:
 - **Additivity of the canonical expectation across lotteries.** `IsHahnSum.add`
   (BirthdayHahn) gives additivity at the consistent-value level under termwise
   non-cancellation; whether `hahnSum (t + u) = hahnSum t + hahnSum u` is **equivalent** to
-  a birthday-minimality inequality (`hahnSum_add_eq_iff`) that remains open. Consequently
-  our mixed-strategy theorems mix canonical *values*; identifying value-mixtures with
-  canonical expectations of *mixed lotteries* awaits the additivity question. A
-  vNM-style representation theorem at countable scope sits behind the same door.
+  a birthday-minimality inequality (`hahnSum_add_eq_iff`) that remains open. The
+  mixed-strategy theorems sidestep this entirely: the mixed act is evaluated directly as
+  a lottery (`mixSorted`), so no linearity premise is used — but a general identification
+  of value-mixtures with canonical expectations of mixed lotteries, and a vNM-style
+  representation theorem at countable scope, still sit behind the additivity door.
 - **Archimedean-flat lotteries.** St. Petersburg (real or surreal-graded), fair countable
   lotteries with equal-class weights, and Pasadena-style games have galaxy-sized solution
   sets (`isHahnSum_iff_of_le_of_attained`); domination semantics is honestly silent.
@@ -185,9 +186,11 @@ cases as mathematics/philosophy:
   probabilities*; the surreal simplicity order is exactly the structure whose absence his
   argument exploits.
 - *Hájek 2003* ("Waging War on Pascal's Wager"): the mixed-strategy objection.
-  `mixed_lt_wagerValue` + `forall_realCast_lt_mixed` are the formal content of
-  Chen–Rubio's reply: mixtures remain transfinitely valuable but are strictly dominated
-  by purity, because surreal multiplication by `γ < 1` is non-absorptive.
+  `isHahnSum_mix_lt_isHahnSum_wager` + `forall_realCast_lt_of_isHahnSum_mix` are the
+  formal content of Chen–Rubio's reply, proved for the mixed act *as a lottery* and
+  across both entire underdetermination halos: mixtures remain transfinitely valuable but
+  are strictly dominated by purity, because surreal multiplication by `γ < 1` is
+  non-absorptive.
 - *Benci–Horsten–Wenmackers (NAP)*: finitely-additive, regular, non-Archimedean
   probability on hyperreal-like fields. Our total-probability theorem realizes NAP's
   normalization desideratum in **No** by canonical transfinite summation rather than by
@@ -226,6 +229,10 @@ cases as mathematics/philosophy:
 `stdPart_refuseValue`, `refuseValue_lt_twelve`,
 `isHahnSum_refuse_lt_isHahnSum_wager`, `refuseValue_lt_wagerValue`,
 `mixed_lt_wagerValue`, `forall_realCast_lt_mixed`,
+`mixUtility`, `mixSorted` (+ closed forms and `mixSorted_strict_dominating`),
+`isHahnSum_mix_lt_isHahnSum_wager`, `forall_realCast_lt_of_isHahnSum_mix`,
+`mixValue`, `mixValue_lt_wagerValue`, `forall_realCast_lt_mixValue`,
+`pascalProb_one_mul_wpow_sq`,
 `stPetersburgUtility` (+ `_pos`), `stPetersburg_expectationSeries`,
 `stPetersburg_collapse`.
 
