@@ -6,3 +6,5 @@ import Infinity.Limits
 import Infinity.Series
 import Infinity.FiniteDeriv
 import Infinity.Summation
+import Infinity.Riemann
+import Infinity.Exp

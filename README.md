@@ -24,6 +24,8 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Summation without convergence** | `Σ_{k<ω} ω⁻ᵏ` has the canonical sum `ω/(ω−1)` under domination semantics (`IsHahnSum`), yet its partial sums converge to nothing | [`Infinity/Series.lean`](Infinity/Series.lean) |
 | **Transfinite Summation Theorem** | *Every* strictly dominating series has a Hahn sum — the Conway cut `!{sₙ−2\|tₙ\| ∣ sₙ+2\|tₙ\|}`; corollary: every ω-power series `Σ rₖ ω⁻ᵏ` sums | [`Infinity/Summation.lean`](Infinity/Summation.lean) |
 | Derivatives at all finite points | `st(p(x)) = p(st x)`, and the derivative at any finite surreal anchor factors through the standard part | [`Infinity/FiniteDeriv.lean`](Infinity/FiniteDeriv.lean) |
+| **Riemann collapse** | The classical ε–δ Riemann integral is *vacuous* on No: no partition has infinitesimal mesh, so **every surreal is a Riemann integral of every function** | [`Infinity/Riemann.lean`](Infinity/Riemann.lean) |
+| **`e^(1/ω)` exists** | The exponential series `Σ εᵏ/k!` at any nonzero infinitesimal is strictly dominating, hence has a transfinite sum | [`Infinity/Exp.lean`](Infinity/Exp.lean) |
 
 ## The one-paragraph story
 
