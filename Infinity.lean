@@ -31,6 +31,7 @@ import Infinity.Laurent
 import Infinity.Darboux
 import Infinity.Norton
 import Infinity.DayOmega
+import Infinity.ExpLog
 import Infinity.Leibniz
 import Infinity.Expectation
 import Infinity.PascalWager
