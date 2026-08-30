@@ -116,4 +116,102 @@ theorem wpow_one_mul_natCast_rep (m : ℕ) :
       exact ⟨_, Set.mem_union_right _ (Set.mem_image_of_mem _ ⟨n, rfl⟩),
         le_of_eq (by push_cast; ring)⟩
 
+/-! ### `exp (ω·m) = (ω^ω)^m` -/
+
+private theorem hdiff_omega_mul (m n : ℕ) :
+    ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) -
+      (ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (n : Surreal)) =
+      ω^ (1 : Surreal) - (n : Surreal) := by
+  push_cast; ring
+
+/-- **The exponential of every rung `ω·(m+1)` is `(ω^ω)^(m+1)`** (Gonshor). Precisely:
+at the canonical representation `ω·(m+1) = !{ω·m + n | ∅}`, Gonshor's genetic formula —
+seeded with the recursion's values `exp (ω·m + n) = (ω^ω)^m·eⁿ` at the left options —
+evaluates to `(ω^ω)^(m+1)`. The `m = 0` case is `gonshorExp_omega` again; each rung's
+seeds are the previous rung's values, so the limit-step theorem composes up Gonshor's
+ladder. -/
+theorem gonshorExp_omega_mul (m : ℕ) :
+    (!{insert 0 (Set.range fun p : ℕ × ℕ ↦
+        ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp p.1 : ℝ) : Surreal)) *
+          expPartial p.2 (ω^ (1 : Surreal) - (p.1 : Surreal))) | ∅} : Surreal)
+      = (ω^ ω^ (1 : Surreal)) ^ (m + 1) := by
+  have hv : ∀ n : ℕ, 0 < (ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp n : ℝ) : Surreal) :=
+    fun n ↦ mul_pos (pow_pos (wpow_pos _) m) (by simpa using Real.exp_pos n)
+  have hs : ∀ n : ℕ, ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (n : Surreal) <
+      ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) := by
+    intro n
+    have h1 : ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) =
+        ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + ω^ (1 : Surreal) := by push_cast; ring
+    have h2 := natCast_lt_wpow_one n
+    rw [h1]
+    linarith
+  have hinf : ∀ n : ℕ, ¬ IsFinite (ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) -
+      (ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (n : Surreal))) := by
+    intro n
+    rw [hdiff_omega_mul]
+    exact not_isFinite_wpow_one_sub_natCast n
+  have h := gonshorCut_eq_wpow (a := ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal))
+    (s := fun n : ℕ ↦ ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (n : Surreal))
+    (v := fun n : ℕ ↦ (ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp n : ℝ) : Surreal))
+    hv hs hinf
+  have hwv : ∀ n : ℕ, wlog ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp n : ℝ) : Surreal)) =
+      ((m : ℕ) : Surreal) * ω^ (1 : Surreal) := by
+    intro n
+    rw [wlog_mul (pow_ne_zero m (wpow_ne_zero _))
+      (ne_of_gt (by simpa using Real.exp_pos n)), wlog_pow, wlog_wpow, wlog_realCast,
+      add_zero]
+  have hwd : ∀ n : ℕ, wlog (ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) -
+      (ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (n : Surreal))) = 1 := by
+    intro n
+    rw [hdiff_omega_mul]
+    exact wlog_wpow_one_sub_natCast n
+  -- Bridge from the statement's options (with the difference simplified to `ω − n`)
+  -- to the theorem's options.
+  have hL : (!{insert 0 (Set.range fun p : ℕ × ℕ ↦
+      ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp p.1 : ℝ) : Surreal)) *
+        expPartial p.2 (ω^ (1 : Surreal) - (p.1 : Surreal))) | ∅} : Surreal) =
+      !{insert 0 (Set.range fun p : ℕ × ℕ ↦
+        ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp p.1 : ℝ) : Surreal)) *
+          expPartial p.2 (ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) -
+            (ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (p.1 : Surreal)))) | ∅} := by
+    apply ofSets_left_eq_of_cofinal
+    · rintro z (rfl | ⟨⟨n, k⟩, rfl⟩)
+      · exact ⟨0, Set.mem_insert 0 _, le_rfl⟩
+      · exact ⟨_, Set.mem_insert_of_mem _ ⟨(n, k), rfl⟩,
+          le_of_eq (by simp only [hdiff_omega_mul m n])⟩
+    · rintro z (rfl | ⟨⟨n, k⟩, rfl⟩)
+      · exact ⟨0, Set.mem_insert 0 _, le_rfl⟩
+      · exact ⟨_, Set.mem_insert_of_mem _ ⟨(n, k), rfl⟩,
+          le_of_eq (by simp only [hdiff_omega_mul m n])⟩
+  -- Identify the exponent cut with `ω·(m+1)`.
+  have hexp : (!{Set.range fun p : ℕ × ℕ ↦
+      wlog ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp p.1 : ℝ) : Surreal)) +
+        (p.2 : Surreal) * wlog (ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) -
+          (ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (p.1 : Surreal))) | ∅} : Surreal) =
+      ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) := by
+    conv_rhs => rw [wpow_one_mul_natCast_rep m]
+    apply ofSets_left_eq_of_cofinal
+    · rintro z ⟨⟨n, k⟩, rfl⟩
+      refine ⟨_, ⟨k, rfl⟩, le_of_eq ?_⟩
+      show wlog ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp n : ℝ) : Surreal)) +
+        ((k : ℕ) : Surreal) * wlog (ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) -
+          (ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + (n : Surreal))) =
+        ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + ((k : ℕ) : Surreal)
+      rw [hwv n, hwd n, mul_one, mul_comm]
+    · rintro z ⟨n, rfl⟩
+      refine ⟨_, ⟨((0 : ℕ), n), rfl⟩, le_of_eq ?_⟩
+      show ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + ((n : ℕ) : Surreal) =
+        wlog ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp (0 : ℕ) : ℝ) : Surreal)) +
+        ((n : ℕ) : Surreal) * wlog (ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal) -
+          (ω^ (1 : Surreal) * ((m : ℕ) : Surreal) + ((0 : ℕ) : Surreal)))
+      rw [hwv 0, hwd 0, mul_one, mul_comm]
+  calc (!{insert 0 (Set.range fun p : ℕ × ℕ ↦
+        ((ω^ ω^ (1 : Surreal)) ^ m * ((Real.exp p.1 : ℝ) : Surreal)) *
+          expPartial p.2 (ω^ (1 : Surreal) - (p.1 : Surreal))) | ∅} : Surreal)
+      = _ := hL
+    _ = _ := h
+    _ = ω^ (ω^ (1 : Surreal) * ((m + 1 : ℕ) : Surreal)) := by rw [hexp]
+    _ = (ω^ ω^ (1 : Surreal)) ^ (m + 1) := by
+        rw [mul_comm (ω^ (1 : Surreal)) _, wpow_natCast_mul]
+
 end Surreal
