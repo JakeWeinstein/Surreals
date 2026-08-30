@@ -703,6 +703,295 @@ theorem norton_error :
   have h1 : (0 : Surreal) = -1 := by linarith
   norm_num at h1
 
+/-- **The genetic value violates Newton–Leibniz**: the simplest-fit integral differs
+from the fundamental-theorem evaluation `exp(ω) − exp(0)` of its own integrand. -/
+theorem nortonIntegralExp_ne_newton_leibniz :
+    nortonIntegralExp ≠ nortonExp (ω^ (1 : Surreal)) - nortonExp 0 := by
+  rw [nortonIntegralExp_eq_wpow_wpow, nortonExp_wpow_one,
+    nortonExp_of_isFinite isFinite_zero, expFin_zero]
+  intro h
+  have h1 : (0 : Surreal) = -1 := by linarith
+  norm_num at h1
+
+/-! ### The contrast: an impoverished option family misses even the Archimedean class
+
+Norton's error is option-family-relative. If the partition points are restricted to the
+naturals-plus-`ω` lattice — the coarsest family on which the classical values
+`exp k = eᵏ`, `exp ω = ω^ω` make sense — the genetic integral does not even get the
+*Archimedean class* right: the simplest fit is `ω²`. Conway's warning that the genetic
+integral "depends on the form" becomes a pair of theorems: naturals-only options give
+`ω²`; two-galaxy options give `ω^ω`; no option family reaches `e^ω − 1`. -/
+
+/-- `expInf'` is finite everywhere. -/
+theorem isFinite_expInf'' (t : Surreal) : IsFinite (expInf' t) := by
+  by_cases h : Infinitesimal t
+  · exact isFinite_expInf' h
+  · unfold expInf'
+    rw [dif_neg fun hc ↦ h hc.1]
+    exact isFinite_one
+
+/-- `expFin` is finite everywhere. -/
+theorem isFinite_expFin' (x : Surreal) : IsFinite (expFin x) := by
+  unfold expFin
+  exact (isFinite_realCast _).mul (isFinite_expInf'' _)
+
+/-- Partitions through the naturals and `ω` only. -/
+def IsNatPartitionOn (x : ℕ → Surreal) (n : ℕ) (a b : Surreal) : Prop :=
+  IsPartitionOn x n a b ∧ ∀ i ≤ n, (∃ k : ℕ, x i = (k : Surreal)) ∨ x i = ω^ (1 : Surreal)
+
+/-- Naturals-lattice partitions are two-galaxy lattice partitions. -/
+theorem IsNatPartitionOn.isExpPartitionOn {x : ℕ → Surreal} {n : ℕ} {a b : Surreal}
+    (hp : IsNatPartitionOn x n a b) : IsExpPartitionOn x n a b := by
+  refine ⟨hp.1, fun i hi ↦ ?_⟩
+  rcases hp.2 i hi with ⟨k, hk⟩ | hk
+  · refine .inl ?_
+    rw [hk, ← Real.toSurreal_natCast]
+    exact isFinite_realCast _
+  · refine .inr ?_
+    rw [hk, sub_self]
+    exact isFinite_zero
+
+/-- The cut just above all lower exponential sums over naturals-lattice partitions. -/
+def nortonNatLo : Cut :=
+  ⨆ p : {q : (ℕ → Surreal) × ℕ // IsNatPartitionOn q.1 q.2 0 (ω^ (1 : Surreal))},
+    Cut.rightSurreal (lowerSumExp p.1.1 p.1.2)
+
+/-- The cut just below all upper exponential sums over naturals-lattice partitions. -/
+def nortonNatHi : Cut :=
+  ⨅ p : {q : (ℕ → Surreal) × ℕ // IsNatPartitionOn q.1 q.2 0 (ω^ (1 : Surreal))},
+    Cut.leftSurreal (upperSumExp p.1.1 p.1.2)
+
+theorem fits_nortonNat_iff {z : Surreal} :
+    Cut.Fits z nortonNatLo nortonNatHi ↔
+      ∀ x n, IsNatPartitionOn x n 0 (ω^ (1 : Surreal)) →
+        lowerSumExp x n < z ∧ z < upperSumExp x n := by
+  rw [Cut.Fits, Set.mem_inter_iff, ← Cut.notMem_left_iff]
+  unfold nortonNatLo nortonNatHi
+  simp only [Cut.left_iSup, Cut.left_iInf, Cut.left_rightSurreal, Cut.left_leftSurreal,
+    Set.mem_iUnion, Set.mem_iInter, Set.mem_Iic, Set.mem_Iio, not_exists, not_le]
+  constructor
+  · rintro ⟨h1, h2⟩ x n hp
+    exact ⟨h1 ⟨(x, n), hp⟩, h2 ⟨(x, n), hp⟩⟩
+  · intro h
+    exact ⟨fun p ↦ (h p.1.1 p.1.2 p.2).1, fun p ↦ (h p.1.1 p.1.2 p.2).2⟩
+
+/-- Fits transfer down to the coarser option family: in particular both `ω^ω` and
+`ω^ω − 1` also fit the naturals-lattice cut. -/
+theorem fits_nortonNat_of_fits {z : Surreal} (hz : Cut.Fits z nortonLo nortonHi) :
+    Cut.Fits z nortonNatLo nortonNatHi :=
+  fits_nortonNat_iff.2 fun x n hp ↦ fits_norton_iff.1 hz x n hp.isExpPartitionOn
+
+private theorem two_lt_wpow_one : (2 : Surreal) < ω^ (1 : Surreal) := by
+  have h := natCast_lt_wpow_one 2
+  push_cast at h
+  exact h
+
+private theorem wpow_two_eq : ω^ (2 : Surreal) = ω^ (1 : Surreal) * ω^ (1 : Surreal) := by
+  rw [← wpow_add]
+  norm_num
+
+/-- Every naturals-lattice lower sum lies below `ω²`: every piece has either a finite
+tag or zero length, so the whole sum is at most `(finite)·ω`. -/
+theorem lowerSumExp_lt_wpow_two {x : ℕ → Surreal} {n : ℕ}
+    (hp : IsNatPartitionOn x n 0 (ω^ (1 : Surreal))) :
+    lowerSumExp x n < ω^ (2 : Surreal) := by
+  have hxle : ∀ i ≤ n, x i ≤ ω^ (1 : Surreal) := fun i hi ↦ hp.1.le_right hi
+  have hx0 : ∀ i ≤ n, 0 ≤ x i := fun i hi ↦ hp.1.left_le hi
+  have hterm : ∀ i ∈ Finset.range n,
+      nortonExp (x i) * (x (i + 1) - x i) ≤ expFin (x i) * ω^ (1 : Surreal) := by
+    intro i hi
+    have hi' := Finset.mem_range.1 hi
+    rcases hp.2 i (by omega) with ⟨k, hk⟩ | hk
+    · have hfin : IsFinite (x i) := by
+        rw [hk, ← Real.toSurreal_natCast]
+        exact isFinite_realCast _
+      rw [nortonExp_of_isFinite hfin]
+      refine mul_le_mul_of_nonneg_left ?_ (expFin_pos' _).le
+      have h1 := hxle (i + 1) (by omega)
+      have h2 := hx0 i (by omega)
+      linarith
+    · -- the tag is `ω`: the piece has zero length
+      have hup : x (i + 1) = ω^ (1 : Surreal) :=
+        le_antisymm (hxle (i + 1) (by omega)) (hk ▸ hp.1.2.2 i hi')
+      rw [hk, hup, sub_self, mul_zero]
+      exact mul_nonneg (expFin_pos' _).le (wpow_nonneg _)
+  obtain ⟨k₀, hk₀⟩ := isFinite_iff.1
+    (isFinite_sum (s := Finset.range n) fun i _ ↦ isFinite_expFin' (x i))
+  calc lowerSumExp x n
+      ≤ ∑ i ∈ Finset.range n, expFin (x i) * ω^ (1 : Surreal) :=
+        Finset.sum_le_sum hterm
+    _ = (∑ i ∈ Finset.range n, expFin (x i)) * ω^ (1 : Surreal) :=
+        (Finset.sum_mul ..).symm
+    _ ≤ (k₀ : Surreal) * ω^ (1 : Surreal) :=
+        mul_le_mul_of_nonneg_right ((le_abs_self _).trans hk₀) (wpow_nonneg _)
+    _ < ω^ (1 : Surreal) * ω^ (1 : Surreal) :=
+        mul_lt_mul_of_pos_right (natCast_lt_wpow_one k₀) (wpow_pos _)
+    _ = ω^ (2 : Surreal) := wpow_two_eq.symm
+
+/-- `ω²` lies below every naturals-lattice upper sum: the gap piece ends at `ω` itself
+and contributes `ω^ω · (infinite length)`. -/
+theorem wpow_two_lt_upperSumExp {x : ℕ → Surreal} {n : ℕ}
+    (hp : IsNatPartitionOn x n 0 (ω^ (1 : Surreal))) :
+    ω^ (2 : Surreal) < upperSumExp x n := by
+  obtain ⟨m, hmn, hfin, htop⟩ := exists_split hp.isExpPartitionOn
+  obtain ⟨hD, hnotfin⟩ := htop (m + 1) (by omega) (by omega)
+  -- in the naturals lattice the first top-galaxy point is `ω` itself
+  have hxm1 : x (m + 1) = ω^ (1 : Surreal) := by
+    rcases hp.2 (m + 1) (by omega) with ⟨k, hk⟩ | hk
+    · exfalso
+      refine hnotfin ?_
+      rw [hk, ← Real.toSurreal_natCast]
+      exact isFinite_realCast _
+    · exact hk
+  have hlen : 1 ≤ x (m + 1) - x m := by
+    have h1 : (0 : Surreal) ≤ x (m + 1) - x m := sub_nonneg.2 (hp.1.2.2 m hmn)
+    have h2 : ¬ IsFinite (x (m + 1) - x m) := by
+      intro hfin'
+      exact hnotfin (by simpa using hfin'.add (hfin m le_rfl))
+    have h3 := natCast_lt_of_nonneg_of_not_isFinite h1 h2 1
+    push_cast at h3
+    linarith
+  have hgap : ω^ (2 : Surreal) < nortonExp (x (m + 1)) * (x (m + 1) - x m) := by
+    rw [hxm1, nortonExp_wpow_one]
+    calc ω^ (2 : Surreal) < ω^ ω^ (1 : Surreal) := wpow_lt_wpow.2 two_lt_wpow_one
+      _ ≤ ω^ ω^ (1 : Surreal) * (ω^ (1 : Surreal) - x m) := by
+          rw [hxm1] at hlen
+          exact le_mul_of_one_le_right (wpow_nonneg _) hlen
+  refine hgap.trans_le ?_
+  refine Finset.single_le_sum (f := fun i ↦ nortonExp (x (i + 1)) * (x (i + 1) - x i))
+    (fun i hi ↦ ?_) (Finset.mem_range.2 hmn)
+  exact mul_nonneg (nortonExp_pos _).le
+    (sub_nonneg.2 (hp.1.2.2 i (Finset.mem_range.1 hi)))
+
+/-- `ω²` fits the naturals-lattice cut. -/
+theorem fits_nortonNat_wpow_two :
+    Cut.Fits (ω^ (2 : Surreal)) nortonNatLo nortonNatHi :=
+  fits_nortonNat_iff.2 fun _ _ hp ↦
+    ⟨lowerSumExp_lt_wpow_two hp, wpow_two_lt_upperSumExp hp⟩
+
+theorem nortonNatLo_lt_nortonNatHi : nortonNatLo < nortonNatHi :=
+  fits_nortonNat_wpow_two.lt
+
+/-- The genetic exponential integral over `[0, ω]` with naturals-only options. -/
+def nortonIntegralNat : Surreal :=
+  Cut.simplestBtwn nortonNatLo_lt_nortonNatHi
+
+/-- The three-point witness partitions `0 < j + 1 < ω` force every fit of the
+naturals-lattice cut above every `j·ω` (`e^{j+1} ≥ j + 2` does the work). -/
+theorem natCast_mul_wpow_one_lt_of_fits {w : Surreal}
+    (hw : Cut.Fits w nortonNatLo nortonNatHi) (j : ℕ) :
+    (j : Surreal) * ω^ (1 : Surreal) < w := by
+  set p : ℕ → Surreal := fun i ↦
+    if i = 0 then 0 else if i = 1 then ((j + 1 : ℕ) : Surreal) else ω^ (1 : Surreal)
+    with hpdef
+  have hp0 : p 0 = 0 := rfl
+  have hp1 : p 1 = ((j + 1 : ℕ) : Surreal) := rfl
+  have hp2 : p 2 = ω^ (1 : Surreal) := rfl
+  have hpart : IsNatPartitionOn p 2 0 (ω^ (1 : Surreal)) := by
+    refine ⟨⟨hp0, hp2, ?_⟩, ?_⟩
+    · intro i hi
+      match i, hi with
+      | 0, _ =>
+        rw [hp0, hp1]
+        positivity
+      | 1, _ =>
+        rw [hp1, hp2]
+        exact (natCast_lt_wpow_one (j + 1)).le
+    · intro i hi
+      match i, hi with
+      | 0, _ => exact .inl ⟨0, by rw [hp0]; norm_num⟩
+      | 1, _ => exact .inl ⟨j + 1, hp1⟩
+      | 2, _ => exact .inr hp2
+  have hlow := (fits_nortonNat_iff.1 hw p 2 hpart).1
+  have hval : lowerSumExp p 2 =
+      ((j + 1 : ℕ) : Surreal) + (Real.exp ((j + 1 : ℕ) : ℝ) : Surreal) *
+        (ω^ (1 : Surreal) - ((j + 1 : ℕ) : Surreal)) := by
+    rw [lowerSumExp, Finset.sum_range_succ, Finset.sum_range_one, hp0, hp1, hp2,
+      nortonExp_of_isFinite isFinite_zero, expFin_zero, nortonExp_natCast]
+    ring
+  rw [hval] at hlow
+  -- `e^{j+1} ≥ j + 2`
+  have hexp : ((j + 2 : ℕ) : Surreal) ≤ (Real.exp ((j + 1 : ℕ) : ℝ) : Surreal) := by
+    have h := Real.add_one_le_exp ((j + 1 : ℕ) : ℝ)
+    have h2 : (((j + 2 : ℕ) : ℝ) : Surreal) ≤ (Real.exp ((j + 1 : ℕ) : ℝ) : Surreal) := by
+      refine Real.toSurreal_le_iff.2 ?_
+      push_cast at h ⊢
+      linarith
+    rwa [Real.toSurreal_natCast] at h2
+  have hsub : (0 : Surreal) ≤ ω^ (1 : Surreal) - ((j + 1 : ℕ) : Surreal) :=
+    sub_nonneg.2 (natCast_lt_wpow_one (j + 1)).le
+  have hmul : ((j + 2 : ℕ) : Surreal) * (ω^ (1 : Surreal) - ((j + 1 : ℕ) : Surreal)) ≤
+      (Real.exp ((j + 1 : ℕ) : ℝ) : Surreal) *
+        (ω^ (1 : Surreal) - ((j + 1 : ℕ) : Surreal)) :=
+    mul_le_mul_of_nonneg_right hexp hsub
+  -- the square bound `(j+1)² < ω`
+  have hsq : (((j + 1) * (j + 1) : ℕ) : Surreal) < ω^ (1 : Surreal) :=
+    natCast_lt_wpow_one ((j + 1) * (j + 1))
+  push_cast at hmul hsq hlow ⊢
+  nlinarith [wpow_pos (1 : Surreal)]
+
+/-- Any fit of the naturals-lattice cut dominates the image of every ordinal below
+`ω²`. -/
+theorem toSurreal_lt_of_fits_nat {w : Surreal}
+    (hw : Cut.Fits w nortonNatLo nortonNatHi) {o : NatOrdinal}
+    (ho : o < ω^ (2 : NatOrdinal)) : o.toSurreal < w := by
+  obtain ⟨z, hz, k, hzk⟩ :=
+    (NatOrdinal.lt_wpow_iff (by norm_num : (2 : NatOrdinal) ≠ 0)).1 ho
+  -- `z` is `0` or `1`
+  have hz2 : z < NatOrdinal.of Ordinal.omega0 :=
+    hz.trans (NatOrdinal.natCast_lt_omega0 2)
+  obtain ⟨mz, rfl⟩ := NatOrdinal.lt_omega0.1 hz2
+  have hmz : mz < 2 := by exact_mod_cast hz
+  have h1 : o.toSurreal < ω^ ((mz : ℕ) : Surreal) * (k : Surreal) := by
+    have h := NatOrdinal.toSurreal.lt_iff_lt.2 hzk
+    rwa [NatOrdinal.toSurreal_mul, toSurreal_wpow, NatOrdinal.toSurreal_natCast,
+      NatOrdinal.toSurreal_natCast] at h
+  have hΩ1 : (1 : Surreal) ≤ ω^ (1 : Surreal) := one_lt_wpow_one.le
+  have hkey := natCast_mul_wpow_one_lt_of_fits hw k
+  interval_cases mz
+  · have heq : ω^ ((0 : ℕ) : Surreal) * (k : Surreal) = (k : Surreal) := by
+      rw [Nat.cast_zero, wpow_zero, one_mul]
+    rw [heq] at h1
+    refine h1.trans (lt_of_le_of_lt ?_ hkey)
+    exact le_mul_of_one_le_right (Nat.cast_nonneg k) hΩ1
+  · have heq : ω^ ((1 : ℕ) : Surreal) * (k : Surreal) = (k : Surreal) * ω^ (1 : Surreal) := by
+      rw [Nat.cast_one, mul_comm]
+    rw [heq] at h1
+    exact h1.trans hkey
+
+/-- **The contrast theorem, coarse horn**: over the naturals-only option family the
+genetic exponential integral evaluates to `ω²` — not even the Archimedean class of
+`e^ω` survives an impoverished option family. -/
+theorem nortonIntegralNat_eq_wpow_two : nortonIntegralNat = ω^ (2 : Surreal) := by
+  rw [nortonIntegralNat, Cut.simplestBtwn_eq_iff]
+  refine ⟨fits_nortonNat_wpow_two, fun w hw ↦ ?_⟩
+  have hbd : (ω^ (2 : Surreal)).birthday = ω^ (2 : NatOrdinal) := by
+    have h : (ω^ (2 : Surreal)) = (ω^ (2 : NatOrdinal)).toSurreal := by
+      rw [toSurreal_wpow]
+      congr 1
+      have h2 := NatOrdinal.toSurreal_natCast 2
+      push_cast at h2 ⊢
+      exact h2.symm
+    rw [h, birthday_toSurreal]
+  rw [hbd]
+  by_contra hlt
+  rw [not_le] at hlt
+  exact absurd (le_toSurreal_birthday w) (not_le.2 (toSurreal_lt_of_fits_nat hw hlt))
+
+/-- **Form dependence of the genetic integral** (Conway's caveat as theorems): the same
+genetic principle — simplest surreal between lower and upper exponential sums — gives
+`ω²` over naturals-only options and `ω^ω` over two-galaxy options, and the two
+disagree. Neither family sees the correct `e^ω − 1`; the coarser one does not even see
+the correct Archimedean class. -/
+theorem norton_form_dependence :
+    nortonIntegralNat = ω^ (2 : Surreal) ∧
+      nortonIntegralExp = ω^ ω^ (1 : Surreal) ∧
+      nortonIntegralNat ≠ nortonIntegralExp := by
+  refine ⟨nortonIntegralNat_eq_wpow_two, nortonIntegralExp_eq_wpow_wpow, ?_⟩
+  rw [nortonIntegralNat_eq_wpow_two, nortonIntegralExp_eq_wpow_wpow]
+  intro h
+  exact absurd (wpow_inj.1 h) two_lt_wpow_one.ne
+
 end Surreal
 
 end
