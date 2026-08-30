@@ -194,7 +194,7 @@ theorem ofSets_left_eq_of_cofinal {A B : Set Surreal} [Small.{u} A] [Small.{u} B
 
 /-! ### `ω^` of a left-cut -/
 
-private theorem numeric_ofSets_out_left (A : Set Surreal) [Small.{u} A] :
+theorem numeric_ofSets_out_left (A : Set Surreal) [Small.{u} A] :
     Numeric (!{Surreal.out '' A | (∅ : Set IGame)}) := by
   refine Numeric.mk (fun y hy z hz ↦ ?_) (fun p y hy ↦ ?_)
   · rw [rightMoves_ofSets] at hz
@@ -210,7 +210,7 @@ private theorem numeric_ofSets_out_left (A : Set Surreal) [Small.{u} A] :
 
 /-- Every left-cut of surreals is represented by the corresponding left-cut of
 representatives. -/
-private theorem surreal_ofSets_left_rep (A : Set Surreal) [Small.{u} A] :
+theorem surreal_ofSets_left_rep (A : Set Surreal) [Small.{u} A] :
     (!{A | ∅} : Surreal) =
       @Surreal.mk (!{Surreal.out '' A | (∅ : Set IGame)}) (numeric_ofSets_out_left A) := by
   rw [← toGame_inj, toGame_ofSets, toGame_mk]
@@ -366,7 +366,7 @@ private theorem mk_wpow_one_neg' : ArchimedeanClass.mk (ω^ (1 : Surreal)) < 0 :
   have h := archimedeanClassMk_wpow_strictAnti (one_pos : (0 : Surreal) < 1)
   simpa using h
 
-private theorem mk_natCast_eq_zero {n : ℕ} (hn : n ≠ 0) :
+theorem mk_natCast_eq_zero {n : ℕ} (hn : n ≠ 0) :
     ArchimedeanClass.mk ((n : Surreal)) = 0 := by
   apply mk_eq_zero_of_stdPart_ne_zero
   rw [ArchimedeanClass.stdPart_natCast]
@@ -381,7 +381,7 @@ private theorem mk_wpow_one_sub_natCast (n : ℕ) :
     exact ArchimedeanClass.mk_add_eq_mk_left
       (by rw [ArchimedeanClass.mk_neg, mk_natCast_eq_zero hn.ne']; exact mk_wpow_one_neg')
 
-private theorem not_isFinite_wpow_one_sub_natCast (n : ℕ) :
+theorem not_isFinite_wpow_one_sub_natCast (n : ℕ) :
     ¬ IsFinite (ω^ (1 : Surreal) - (n : Surreal)) := by
   intro hfin
   have h0 : (0 : ArchimedeanClass Surreal) ≤ ArchimedeanClass.mk (ω^ (1 : Surreal)) := by
