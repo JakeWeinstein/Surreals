@@ -445,7 +445,7 @@ private theorem lower_nonneg_of_pos_sr {r : Dyadic} (hr : 0 < r) : 0 ≤ r.lower
   have h1 : (1 : ℚ) ≤ (r.num : ℚ) := by exact_mod_cast hnum
   linarith
 
-private theorem base_add_nat_succ (base : NatOrdinal) (i : ℕ) :
+theorem base_add_nat_succ (base : NatOrdinal) (i : ℕ) :
     (base + (i : NatOrdinal)) + 1 = base + ((i + 1 : ℕ) : NatOrdinal) := by
   rw [add_assoc]
   congr 1
