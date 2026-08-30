@@ -19,6 +19,7 @@ import Infinity.CauchyProduct
 import Infinity.Sqrt
 import Infinity.OrdinalSum
 import Infinity.BirthdayHahn
+<<<<<<< HEAD
 import Infinity.TransfiniteSum
 import Infinity.NormalForm
 import Infinity.CNF
@@ -30,3 +31,5 @@ import Infinity.ExpFin
 import Infinity.Laurent
 import Infinity.Darboux
 import Infinity.Leibniz
+import Infinity.Expectation
+import Infinity.PascalWager
