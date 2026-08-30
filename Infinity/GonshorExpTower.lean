@@ -281,7 +281,7 @@ theorem wpow_two_rep :
 
 /-! ### `exp (ω²) = ω^(ω²)` -/
 
-private theorem mk_wpow_lt_zero {x : Surreal} (hx : 0 < x) :
+theorem mk_wpow_lt_zero {x : Surreal} (hx : 0 < x) :
     ArchimedeanClass.mk (ω^ x) < 0 := by
   have h := archimedeanClassMk_wpow_strictAnti hx
   simpa using h
