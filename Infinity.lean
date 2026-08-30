@@ -37,3 +37,4 @@ import Infinity.Expectation
 import Infinity.PascalWager
 import Infinity.SeriesLimits
 import Infinity.Census
+import Infinity.HaloRealization
