@@ -495,6 +495,126 @@ theorem day_omega_near_dyadic {y : Surreal} {d : Dyadic}
     linarith
   · exact .inr (.inl (eq_dyadic_add_wpow_neg_one_of_birthday_le hinf h hb))
 
+/-! ### The complete day-`ω` census -/
+
+/-- **Conway's day-`ω` census, machine-checked**: a surreal is born by day `ω` if and
+only if it is a real number, `±ω`, or a dyadic neighbour `d ± ω⁻¹`. (ONAG ch. 2's
+description of the numbers created on day `ω`, as a single kernel-checked `iff`.
+The infinite branch is `Infinity.Identification`'s day-`ω` classification; the finite
+branches are the standard-part case analyses of this file.) -/
+theorem birthday_le_omega0_iff {y : Surreal} :
+    y.birthday ≤ NatOrdinal.of Ordinal.omega0 ↔
+      (∃ r : ℝ, y = (r : Surreal)) ∨ y = ω^ (1 : Surreal) ∨ y = -ω^ (1 : Surreal) ∨
+        ∃ d : Dyadic, y = (d : Surreal) + ω^ (-1 : Surreal) ∨
+          y = (d : Surreal) - ω^ (-1 : Surreal) := by
+  constructor
+  · intro hb
+    by_cases hy : IsFinite y
+    · by_cases hd : ∃ d : Dyadic, stdPart y = ((d : ℚ) : ℝ)
+      · obtain ⟨d, hdst⟩ := hd
+        have hinf : Infinitesimal (y - (d : Surreal)) := by
+          have h := infinitesimal_sub_stdPart hy
+          rwa [hdst, Real.toSurreal_ratCast] at h
+        rcases day_omega_near_dyadic hinf hb with h | h | h
+        · exact .inl ⟨((d : ℚ) : ℝ), by rw [h, Real.toSurreal_ratCast]⟩
+        · exact .inr (.inr (.inr ⟨d, .inl h⟩))
+        · exact .inr (.inr (.inr ⟨d, .inr h⟩))
+      · push Not at hd
+        exact .inl ⟨stdPart y, eq_realCast_stdPart_of_isFinite_of_birthday_le hy hd hb⟩
+    · rcases eq_wpow_one_or_eq_neg_of_not_isFinite_of_birthday_le hy hb with h | h
+      · exact .inr (.inl h)
+      · exact .inr (.inr (.inl h))
+  · rintro (⟨r, rfl⟩ | rfl | rfl | ⟨d, rfl | rfl⟩)
+    · exact birthday_realCast_le r
+    · exact le_of_eq birthday_wpow_one
+    · rw [birthday_neg]
+      exact le_of_eq birthday_wpow_one
+    · exact birthday_dyadic_add_wpow_neg_one_le d
+    · exact birthday_dyadic_sub_wpow_neg_one_le d
+
+/-! ### The exponential corollaries: the day-`ω` criterion for the functional
+equation, settled -/
+
+private theorem one_dyadic_cast : ((1 : Dyadic) : Surreal) = 1 := by
+  show (((1 : Dyadic) : ℚ) : Surreal) = 1
+  norm_num
+
+/-- The day-`ω` classification near `1`. -/
+theorem day_omega_near_one {y : Surreal} (hinf : Infinitesimal (y - 1))
+    (hb : y.birthday ≤ NatOrdinal.of Ordinal.omega0) :
+    y = 1 ∨ y = 1 + ω^ (-1 : Surreal) ∨ y = 1 - ω^ (-1 : Surreal) := by
+  have h := day_omega_near_dyadic (d := 1) (by rwa [one_dyadic_cast]) hb
+  rwa [one_dyadic_cast] at h
+
+/-- The exponential of a positive infinitesimal exceeds `1` (quantitatively: it is
+`1 + ε + O(ε²)` with `ε > 0`). -/
+theorem one_lt_expInf {ε : Surreal} (hε : Infinitesimal ε) (hε0 : 0 < ε) :
+    1 < expInf ε hε hε0.ne' := by
+  rw [← expInf'_of_ne hε hε0.ne']
+  have h := abs_expInf'_sub_one_sub_le hε
+  have h1 : expInf' ε - 1 - ε ≥ -(3 / 2 * ε ^ 2) := by
+    have := (abs_le.1 h).1
+    linarith
+  have h2 : (2 : ℕ) • |ε| < 1 := infinitesimal_iff.1 hε 2
+  rw [nsmul_eq_mul, abs_of_pos hε0] at h2
+  push_cast at h2
+  have hp : (2 : Surreal) * ε ^ 2 < ε := by nlinarith [h2, hε0]
+  linarith
+
+/-- Infinitesimal closeness to `1` for `expInf`. -/
+theorem infinitesimal_expInf_sub_one {ε : Surreal} (hε : Infinitesimal ε) (hε0 : ε ≠ 0) :
+    Infinitesimal (expInf ε hε hε0 - 1) := by
+  have h := infinitesimal_sub_stdPart (x := expInf ε hε hε0) ?_
+  · rwa [stdPart_expInf hε hε0, Real.toSurreal_one] at h
+  · rw [← expInf'_of_ne hε hε0]
+    exact isFinite_expInf' hε
+
+/-- **The day-`ω` criterion for the exponential functional equation, settled**: for
+positive infinitesimals `ε, δ`, the product `expInf ε · expInf δ` is born by day `ω`
+**iff** it equals `1 + ω⁻¹` on the nose. (The criterion of
+`Infinity.Identification.expInf_add_eq_mul_of_birthday_le` therefore fires exactly on
+the fibre of Gonshor's `exp` over `1 + ω⁻¹` — by the census, no other value born by
+day `ω` is available to a product of exponentials.) -/
+theorem birthday_expInf_mul_le_iff {ε δ : Surreal}
+    (hε : Infinitesimal ε) (hδ : Infinitesimal δ) (hε0 : 0 < ε) (hδ0 : 0 < δ) :
+    (expInf ε hε hε0.ne' * expInf δ hδ hδ0.ne').birthday ≤ NatOrdinal.of Ordinal.omega0 ↔
+      expInf ε hε hε0.ne' * expInf δ hδ hδ0.ne' = 1 + ω^ (-1 : Surreal) := by
+  constructor
+  · intro hb
+    have ha := infinitesimal_expInf_sub_one hε hε0.ne'
+    have hbd := infinitesimal_expInf_sub_one hδ hδ0.ne'
+    have hP : Infinitesimal (expInf ε hε hε0.ne' * expInf δ hδ hδ0.ne' - 1) := by
+      have hsplit : expInf ε hε hε0.ne' * expInf δ hδ hδ0.ne' - 1 =
+          (expInf ε hε hε0.ne' - 1) + (expInf δ hδ hδ0.ne' - 1) +
+            (expInf ε hε hε0.ne' - 1) * (expInf δ hδ hδ0.ne' - 1) := by ring
+      rw [hsplit]
+      exact (ha.add hbd).add (ha.mul_isFinite hbd.isFinite)
+    have h1ε := one_lt_expInf hε hε0
+    have h1δ := one_lt_expInf hδ hδ0
+    have h1P : 1 < expInf ε hε hε0.ne' * expInf δ hδ hδ0.ne' := by nlinarith
+    rcases day_omega_near_one hP hb with h | h | h
+    · rw [h] at h1P
+      exact absurd h1P (lt_irrefl 1)
+    · exact h
+    · rw [h] at h1P
+      have := wpow_pos (-1 : Surreal)
+      linarith
+  · intro h
+    rw [h]
+    have hb := birthday_dyadic_add_wpow_neg_one_le 1
+    rwa [one_dyadic_cast] at hb
+
+/-- If a product of exponentials hits `1 + ω⁻¹` exactly, the functional equation holds
+at that pair — the (unique possible) day-`ω` instance of Gonshor's
+`exp (ε + δ) = exp ε · exp δ` for the canonical-sum exponential. -/
+theorem expInf_add_eq_mul_of_eq_one_add {ε δ : Surreal}
+    (hε : Infinitesimal ε) (hδ : Infinitesimal δ) (hε0 : 0 < ε) (hδ0 : 0 < δ)
+    (h : expInf ε hε hε0.ne' * expInf δ hδ hδ0.ne' = 1 + ω^ (-1 : Surreal)) :
+    expInf (ε + δ) (hε.add hδ) (by positivity) =
+      expInf ε hε hε0.ne' * expInf δ hδ hδ0.ne' :=
+  expInf_add_eq_mul_of_birthday_le hε hδ hε0 hδ0
+    ((birthday_expInf_mul_le_iff hε hδ hε0 hδ0).2 h)
+
 end Surreal
 
 end
