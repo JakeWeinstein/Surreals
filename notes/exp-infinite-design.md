@@ -116,3 +116,24 @@ That template (Laurent.lean) is the shortest credible path to a verified
 4. **Is birthday-minimality multiplicative on exp-products?** (`expInf_add_eq_mul_iff`'s
    right-hand side.) The day-ω classification reduces the first unknown case to a
    concrete question about day-ω surreals infinitesimally close to 1.
+
+## 7. Outcome (2026-08-30, second session — written after the fact)
+
+Item 3 of §6 landed in full, beyond the plan: `Infinity/Norton.lean` proves both horns
+of Norton's error (§4's geometry exactly as predicted — the finite halo of `ω^ω` fits,
+and the simplicity principle selects the bare monomial), plus the form-dependence
+contrast (naturals-only options → `ω²`). The mechanism that made horn (b) provable
+*without* any day-`ω·2` theory: fits of the exp-Darboux cut dominate the surreal image
+of every ordinal below `ω^ω`, so `Surreal.le_toSurreal_birthday` (upstream) forces
+their birthdays up to `ω^ω`, while the monomial — an ordinal image — is born exactly
+there. Simplicity comparisons against *ordinal-image* candidates are cheap; that is the
+transferable lesson.
+
+Item 4 was then settled at day `ω` by completing Conway's day-`ω` census
+(`Infinity/DayOmega.lean`): the criterion fires iff the product is exactly `1 + ω⁻¹`.
+The new sharpest sub-problem chain is recorded in `docs/HANDOFF.md` §6.0′; the most
+attackable is the **first exact exponential value** `expInf σ = 1 + ω⁻¹` for `σ` a Hahn
+sum of the log series `Σ (−1)^{k+1} ω⁻ᵏ/k` — everything is banked except the
+truncated-composition estimate `E_n(σ) ≡ 1 + ω⁻¹ (mod mk ω⁻ⁿ)`, i.e. formal
+`exp ∘ log = id` at truncation level (real-polynomial identity + the binomial/domination
+calculus of `NormalForm`/`CauchyProduct`, or a `Sqrt.lean`-style coefficient recursion).

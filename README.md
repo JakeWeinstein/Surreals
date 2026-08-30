@@ -44,6 +44,15 @@ Everything is proved from first principles on top of [mathlib] and the
 | **ω+ω summation** | Transfinite summation past length ω: two-block sums via canonicity, composing to ω·3 in lines — the road to full Hahn evaluation | [`Infinity/OrdinalSum.lean`](Infinity/OrdinalSum.lean) |
 | **Simplicity uniqueness + exact canonical sums** | The birthday-simplest fit between cuts is *unique* (Conway's simplicity theorem, sign-expansion-free); `hahnSum(−t) = −hahnSum t`; first closed-form canonical sums (`= 1`, `= ω`); `birthday ω = ω`; additivity/multiplicativity reduced to sharp birthday inequalities | [`Infinity/BirthdayHahn.lean`](Infinity/BirthdayHahn.lean) |
 
+### Norton's error and the day-ω census
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **Norton's error as a theorem** | The genetic (simplest-fit) value of `∫₀^ω eˣ dx` over the `ω`-lattice option family is the bare monomial `ω^ω = e^ω` — *Norton's famous wrong value*: the cut is blind to the whole finite halo (both `e^ω` and the true `e^ω − 1` fit), and birthday-simplicity selects the monomial. Simplest-fit is structurally not integration | [`Infinity/Norton.lean`](Infinity/Norton.lean) |
+| **Form dependence** | The same genetic principle over naturals-only options gives `ω²` — not even the Archimedean class of `e^ω` survives; Conway's "the integral depends on the form" as theorems | [`Infinity/Norton.lean`](Infinity/Norton.lean) |
+| **Conway's day-ω census** | A surreal is born by day `ω` **iff** it is a real, `±ω`, or a dyadic neighbour `d ± 1/ω` — as a single kernel-checked `iff`; `birthday (1/ω) = ω`, every real born by day `ω` (the birthday bound left open upstream) | [`Infinity/DayOmega.lean`](Infinity/DayOmega.lean) |
+| **The day-ω exp criterion, settled** | A product of exponentials of positive infinitesimals is born by day `ω` iff it equals `1 + 1/ω` exactly — the census leaves no other value; the geometric halo is empty at day `ω` (every Hahn sum of `Σ ω⁻ᵏ` born ≥ `ω+1`) | [`Infinity/DayOmega.lean`](Infinity/DayOmega.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
