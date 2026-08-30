@@ -391,6 +391,171 @@ theorem eq_grid_of_isFinite_of_birthday_lt_omega_two {y : Surreal.{u}} (hy : IsF
   obtain ⟨r, hr, -, -⟩ := eq_grid_of_isFinite_of_birthday_le n hy hn
   exact ⟨r, hr⟩
 
+/-! ### The census as an iff, and exact birthdays on the grid -/
+
+/-- **The grid census as an iff** — the census-iff format at every day `ω + n`
+simultaneously (for finite surreals): born by day `ω + n` exactly when the coefficient
+over the standard part has height at most `n + 1` (at most `n` over a non-dyadic
+standard part). -/
+theorem isFinite_birthday_le_omega0_add_iff {y : Surreal.{u}} (hy : IsFinite y) (n : ℕ) :
+    y.birthday ≤ NatOrdinal.of Ordinal.omega0 + (n : NatOrdinal) ↔
+      ∃ r : Dyadic, y = ((stdPart y : ℝ) : Surreal) + (r : Surreal) * ω^ (-1 : Surreal) ∧
+        Dyadic.hgt r ≤ n + 1 ∧
+        ((∀ e : Dyadic, stdPart y ≠ ((e : ℚ) : ℝ)) → Dyadic.hgt r ≤ n) := by
+  constructor
+  · exact eq_grid_of_isFinite_of_birthday_le n hy
+  · rintro ⟨r, hval, _, h2⟩
+    by_cases hdy : ∃ e : Dyadic, stdPart y = ((e : ℚ) : ℝ)
+    · obtain ⟨e, he⟩ := hdy
+      rcases eq_or_ne r 0 with rfl | hr0
+      · rw [hval, dyadic_cast_zero, zero_mul, add_zero, he, Real.toSurreal_ratCast]
+        refine le_trans ?_ (le_add_of_nonneg_right (by exact_mod_cast Nat.zero_le n))
+        exact (birthday_dyadic_lt_omega0 e).le
+      · rw [hval, he, Real.toSurreal_ratCast]
+        refine (birthday_dyadic_add_dyadic_mul_wpow_le e hr0).trans (add_le_add le_rfl ?_)
+        exact_mod_cast (by omega : Dyadic.hgt r - 1 ≤ n)
+    · push Not at hdy
+      rw [hval]
+      refine (birthday_realCast_add_dyadic_mul_wpow_le _ r).trans (add_le_add le_rfl ?_)
+      exact_mod_cast (h2 hdy)
+
+theorem dyadic_cast_inj {r s : Dyadic} (h : (r : Surreal) = (s : Surreal)) : r = s := by
+  rcases lt_trichotomy r s with hrs | hrs | hrs
+  · exact absurd (dyadic_cast_lt hrs) (by rw [h]; exact lt_irrefl _)
+  · exact hrs
+  · exact absurd (dyadic_cast_lt hrs) (by rw [h]; exact lt_irrefl _)
+
+theorem dyadic_cast_ne_zero {r : Dyadic} (hr : r ≠ 0) : (r : Surreal) ≠ 0 := by
+  intro h
+  apply hr
+  refine dyadic_cast_inj (s := 0) ?_
+  rw [h, dyadic_cast_zero]
+
+theorem isFinite_dyadic_cast (d : Dyadic) : IsFinite ((d : Surreal)) := by
+  show IsFinite (((d : ℚ) : Surreal))
+  exact isFinite_ratCast _
+
+/-- Distinct coefficients give distinct grid points. -/
+theorem grid_coeff_unique {a : ℝ} {r s : Dyadic}
+    (h : (a : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)
+      = (a : Surreal) + (s : Surreal) * ω^ (-1 : Surreal)) : r = s := by
+  have h1 : (r : Surreal) * ω^ (-1 : Surreal) = (s : Surreal) * ω^ (-1 : Surreal) := by
+    linarith
+  exact dyadic_cast_inj (mul_right_cancel₀ (wpow_ne_zero _) h1)
+
+private theorem mk_dyadic_cast_of_ne_zero' {c : Dyadic} (hc : c ≠ 0) :
+    ArchimedeanClass.mk ((c : Surreal)) = 0 := by
+  have h : ((c : Dyadic) : Surreal) = (((c : ℚ) : ℝ) : Surreal) := by
+    rw [← Real.toSurreal_ratCast]
+  rw [h]
+  refine mk_realCast ?_
+  intro h0
+  apply hc
+  have h1 : (c : ℚ) = (0 : ℚ) := by exact_mod_cast h0
+  ext
+  rw [h1]
+  norm_num
+
+/-- **The exact birthday of every grid point over a dyadic anchor**:
+`d + r·ω⁻¹` is born exactly on day `ω + (hgt r − 1)` for `r ≠ 0`. In particular the
+height function `hgt` of `Infinity.Census` computes genuine birthdays over dyadic
+anchors: the upper bounds of `Infinity.HaloRealization` are tight. -/
+theorem birthday_grid_dyadic_eq (d : Dyadic) {r : Dyadic} (hr : r ≠ 0) :
+    ((d : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)).birthday
+      = NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r - 1 : ℕ) : NatOrdinal) := by
+  refine le_antisymm (birthday_dyadic_add_dyadic_mul_wpow_le d hr) ?_
+  by_contra hcon
+  rw [not_le] at hcon
+  have hgt1 := Dyadic.hgt_pos_of_ne_zero hr
+  have hcastd : ((d : Dyadic) : Surreal) = ((((d : ℚ) : ℝ)) : Surreal) := by
+    rw [← Real.toSurreal_ratCast]
+  have hyfin : IsFinite ((d : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)) :=
+    (isFinite_dyadic_cast d).add (infinitesimal_dyadic_mul_wpow r).isFinite
+  have hst : stdPart ((d : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)) = ((d : ℚ) : ℝ) := by
+    rw [hcastd]
+    exact stdPart_grid _ r
+  rcases eq_or_lt_of_le (show 1 ≤ Dyadic.hgt r from hgt1) with h1 | h2
+  · -- height 1: below day `ω` only dyadics live
+    have hΩ : ((d : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)).birthday
+        < NatOrdinal.of Ordinal.omega0 := by
+      have h0 : ((Dyadic.hgt r - 1 : ℕ) : NatOrdinal) = 0 := by
+        exact_mod_cast (by omega : Dyadic.hgt r - 1 = 0)
+      rwa [h0, add_zero] at hcon
+    obtain ⟨e, he⟩ := birthday_lt_omega0_iff.1 hΩ
+    have he' : ((e : Dyadic) : Surreal) = (d : Surreal) + (r : Surreal) * ω^ (-1 : Surreal) :=
+      he
+    have hsub : (r : Surreal) * ω^ (-1 : Surreal) = ((e - d : Dyadic) : Surreal) := by
+      rw [dyadic_cast_sub']
+      linarith [he'.symm]
+    have hed : (e - d : Dyadic) ≠ 0 := by
+      intro h0
+      rw [h0, dyadic_cast_zero] at hsub
+      exact absurd hsub (mul_ne_zero (dyadic_cast_ne_zero hr) (wpow_ne_zero _))
+    have hmk0 : ArchimedeanClass.mk ((r : Surreal) * ω^ (-1 : Surreal)) = 0 := by
+      rw [hsub]
+      exact mk_dyadic_cast_of_ne_zero' hed
+    have hmkpos := infinitesimal_def.1 (infinitesimal_dyadic_mul_wpow r)
+    rw [hmk0] at hmkpos
+    exact absurd hmkpos (lt_irrefl _)
+  · -- height at least 2: the census one day earlier forbids the point
+    have hb2 : ((d : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)).birthday
+        ≤ NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r - 2 : ℕ) : NatOrdinal) := by
+      have hstep : NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r - 1 : ℕ) : NatOrdinal)
+          = (NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r - 2 : ℕ) : NatOrdinal)) + 1 := by
+        rw [omega_add_nat_succ]
+        congr 1
+        exact_mod_cast (by omega : Dyadic.hgt r - 1 = Dyadic.hgt r - 2 + 1)
+      rw [hstep] at hcon
+      exact Order.lt_add_one_iff.1 hcon
+    obtain ⟨r', hval', hh1', _⟩ :=
+      eq_grid_of_isFinite_of_birthday_le (Dyadic.hgt r - 2) hyfin hb2
+    rw [hst, ← hcastd] at hval'
+    have hrr : r' = r := by
+      refine dyadic_cast_inj (mul_right_cancel₀ (wpow_ne_zero (-1 : Surreal)) ?_)
+      linarith [hval'.symm]
+    rw [hrr] at hh1'
+    omega
+
+/-- **The exact birthday of every grid point over a non-dyadic real anchor**:
+`a + r·ω⁻¹` is born exactly on day `ω + hgt r` when `a` is not a dyadic rational.
+For `r = 0` this is the exact birthday of a non-dyadic real (day `ω`); for `r = ±1` it
+certifies the day-`ω + 1` newborns `a ± ω⁻¹` over every non-dyadic real. -/
+theorem birthday_grid_realCast_eq {a : ℝ} (hnd : ∀ e : Dyadic, a ≠ ((e : ℚ) : ℝ))
+    (r : Dyadic) :
+    ((a : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)).birthday
+      = NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r : ℕ) : NatOrdinal) := by
+  rcases eq_or_ne r 0 with rfl | hr
+  · rw [dyadic_cast_zero, zero_mul, add_zero]
+    have h := birthday_realCast_eq hnd
+    rw [h]
+    have h0 : ((Dyadic.hgt 0 : ℕ) : NatOrdinal) = 0 := by
+      exact_mod_cast Dyadic.hgt_zero
+    rw [h0, add_zero]
+  · refine le_antisymm (birthday_realCast_add_dyadic_mul_wpow_le a r) ?_
+    by_contra hcon
+    rw [not_le] at hcon
+    have hgt1 := Dyadic.hgt_pos_of_ne_zero hr
+    have hyfin : IsFinite ((a : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)) :=
+      isFinite_grid a r
+    have hst : stdPart ((a : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)) = a :=
+      stdPart_grid a r
+    have hb2 : ((a : Surreal) + (r : Surreal) * ω^ (-1 : Surreal)).birthday
+        ≤ NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r - 1 : ℕ) : NatOrdinal) := by
+      have hstep : NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r : ℕ) : NatOrdinal)
+          = (NatOrdinal.of Ordinal.omega0 + ((Dyadic.hgt r - 1 : ℕ) : NatOrdinal)) + 1 := by
+        rw [omega_add_nat_succ]
+        congr 1
+        exact_mod_cast (by omega : Dyadic.hgt r = Dyadic.hgt r - 1 + 1)
+      rw [hstep] at hcon
+      exact Order.lt_add_one_iff.1 hcon
+    obtain ⟨r', hval', _, hh2'⟩ :=
+      eq_grid_of_isFinite_of_birthday_le (Dyadic.hgt r - 1) hyfin hb2
+    rw [hst] at hval'
+    have hrr : r' = r := grid_coeff_unique hval'.symm
+    have := hh2' (by rw [hst]; exact hnd)
+    rw [hrr] at this
+    omega
+
 /-! ### The geometric ladder: the halo of `ω/(ω−1)` is empty below day `ω·2` -/
 
 private theorem wpow_neg_one_eq_eps0' : ω^ (-1 : Surreal.{0}) = eps0 := by
@@ -414,26 +579,6 @@ private theorem partialSum_geom_three' :
     partialSum (fun k ↦ eps0 ^ k) 3 = 1 + eps0 + eps0 ^ 2 := by
   rw [partialSum, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_one,
     pow_zero, pow_one]
-
-theorem dyadic_cast_inj {r s : Dyadic} (h : (r : Surreal) = (s : Surreal)) : r = s := by
-  rcases lt_trichotomy r s with hrs | hrs | hrs
-  · exact absurd (dyadic_cast_lt hrs) (by rw [h]; exact lt_irrefl _)
-  · exact hrs
-  · exact absurd (dyadic_cast_lt hrs) (by rw [h]; exact lt_irrefl _)
-
-private theorem mk_dyadic_cast_of_ne_zero {c : Dyadic} (hc : c ≠ 0) :
-    ArchimedeanClass.mk ((c : Surreal)) = 0 := by
-  have h : ((c : Dyadic) : Surreal) = (((c : ℚ) : ℝ) : Surreal) := by
-    rw [← Real.toSurreal_ratCast]
-  rw [h]
-  refine mk_realCast ?_
-  intro h0
-  apply hc
-  have h1 : ((c : ℚ) : ℝ) = ((0 : ℚ) : ℝ) := by rw [h0]; norm_num
-  have h2 : (c : ℚ) = (0 : ℚ) := by exact_mod_cast h1
-  ext
-  rw [h2]
-  norm_num
 
 /-- **The uniform step of the geometric ladder**: every Hahn sum of the geometric
 series `Σ ω⁻ᵏ` is born at or after day `ω·2`. By the grid census, anything finite born
@@ -478,7 +623,7 @@ theorem omega0_add_omega0_le_birthday_of_isHahnSum_geometric {w : Surreal.{0}}
       simpa using this
     have hmk : ArchimedeanClass.mk (((r - 1 : Dyadic) : Surreal) * ω^ (-1 : Surreal))
         = ArchimedeanClass.mk (eps0 ^ 1) := by
-      rw [ArchimedeanClass.mk_mul, mk_dyadic_cast_of_ne_zero hne', zero_add, pow_one,
+      rw [ArchimedeanClass.mk_mul, mk_dyadic_cast_of_ne_zero' hne', zero_add, pow_one,
         wpow_neg_one_eq_eps0']
     rw [hmk] at h2
     exact absurd h2 (not_le.2 (mk_pow_lt_mk_pow_succ eps0_infinitesimal' eps0_pos' 1))
