@@ -25,3 +25,8 @@ import Infinity.CNF
 import Infinity.GonshorExp
 import Infinity.GonshorExpTower
 import Infinity.GonshorExpEpsilon
+import Infinity.Identification
+import Infinity.ExpFin
+import Infinity.Laurent
+import Infinity.Darboux
+import Infinity.Leibniz
