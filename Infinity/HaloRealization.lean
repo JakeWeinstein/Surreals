@@ -478,7 +478,7 @@ end CoreInt
 /-! ### The anchors: separation for real and dyadic cast games -/
 
 /-- Below any positive real there is a positive dyadic. -/
-private theorem exists_dyadic_pos_lt {x : ℝ} (hx : 0 < x) :
+theorem exists_dyadic_pos_lt {x : ℝ} (hx : 0 < x) :
     ∃ q : Dyadic, 0 < q ∧ ((q : ℚ) : ℝ) < x := by
   obtain ⟨n, hn⟩ := exists_pow_lt_of_lt_one hx (by norm_num : (1 / 2 : ℝ) < 1)
   refine ⟨Dyadic.half ^ n, pow_pos half_pos' n, ?_⟩
@@ -569,11 +569,11 @@ private theorem lower_nonneg_of_pos {r : Dyadic} (hr : 0 < r) : 0 ≤ r.lower :=
   have h1 : (1 : ℚ) ≤ (r.num : ℚ) := by exact_mod_cast hnum
   linarith
 
-private theorem nat_cast_mono {i j : ℕ} (h : i ≤ j) :
+theorem nat_cast_mono {i j : ℕ} (h : i ≤ j) :
     ((i : ℕ) : NatOrdinal) ≤ ((j : ℕ) : NatOrdinal) := by
   exact_mod_cast h
 
-private theorem omega_add_nat_succ (i : ℕ) :
+theorem omega_add_nat_succ (i : ℕ) :
     (NatOrdinal.of Ordinal.omega0 + (i : NatOrdinal)) + 1
       = NatOrdinal.of Ordinal.omega0 + ((i + 1 : ℕ) : NatOrdinal) := by
   rw [add_assoc]
