@@ -232,6 +232,136 @@ theorem birthday_wpow_neg_one :
     · rw [sub_zero]
       exact infinitesimal_wpow_neg_one
 
+/-! ### Every real is born by day `ω` -/
+
+/-- **Every real number is born by day `ω`** — the birthday bound stated as an open task
+in CG's `Surreal/Real.lean`: the canonical representation of a real is its Dedekind cut
+of dyadics, all of which are born before day `ω`. -/
+theorem birthday_realCast_le (x : ℝ) :
+    (x : Surreal).birthday ≤ NatOrdinal.of Ordinal.omega0 := by
+  show (Surreal.mk (Real.toIGame x)).birthday ≤ NatOrdinal.of Ordinal.omega0
+  refine (birthday_mk_le _).trans ?_
+  rw [Real.toIGame, IGame.birthday_ofSets]
+  refine max_le ?_ ?_ <;>
+  · refine csSup_le' ?_
+    rintro o ⟨z, ⟨q, hq, rfl⟩, rfl⟩
+    refine Order.succ_le_of_lt ?_
+    exact IGame.short_iff_birthday_finite.1 (IGame.Short.dyadic q)
+
+/-- A real cast that is infinitesimal is zero. -/
+theorem eq_zero_of_infinitesimal_realCast {r : ℝ} (h : Infinitesimal (r : Surreal)) :
+    r = 0 := by
+  by_contra hr
+  rw [infinitesimal_def, mk_realCast hr] at h
+  exact lt_irrefl _ h
+
+/-- Domination transfers infinitesimality. -/
+theorem Infinitesimal.mono {a b : Surreal} (hb : Infinitesimal b) (h : |a| ≤ |b|) :
+    Infinitesimal a := by
+  rw [infinitesimal_iff] at hb ⊢
+  intro n
+  refine lt_of_le_of_lt ?_ (hb n)
+  rw [nsmul_eq_mul, nsmul_eq_mul]
+  exact mul_le_mul_of_nonneg_left h (Nat.cast_nonneg n)
+
+/-! ### The day-`ω` classification: finite surreals with non-dyadic standard part -/
+
+/-- **The day-`ω` classification, non-dyadic branch**: a finite surreal born by day `ω`
+whose standard part is not a dyadic rational *is* the real cast of its standard part.
+Proof by the method of `Infinity.Identification`: a birthday-minimal game for such a
+surreal has all-dyadic options, no dyadic option can enter the infinitesimal halo of a
+non-dyadic real, so the real cast fits the option cuts; it is born by day `ω`
+(`birthday_realCast_le`), and simplest-fit uniqueness leaves no alternative. -/
+theorem eq_realCast_stdPart_of_isFinite_of_birthday_le {y : Surreal}
+    (hy : IsFinite y) (hnd : ∀ d : Dyadic, stdPart y ≠ ((d : ℚ) : ℝ))
+    (hb : y.birthday ≤ NatOrdinal.of Ordinal.omega0) :
+    y = ((stdPart y : ℝ) : Surreal) := by
+  -- `y` is not itself a dyadic
+  have hynd : NatOrdinal.of Ordinal.omega0 ≤ y.birthday := by
+    by_contra h
+    rw [not_le] at h
+    obtain ⟨q, hq⟩ := Surreal.birthday_lt_omega0_iff.1 h
+    have hq' : ((q : ℚ) : Surreal) = y := hq
+    refine hnd q ?_
+    rw [← hq', ArchimedeanClass.stdPart_ratCast]
+  -- the infinitesimal halo
+  have hev : Infinitesimal (y - ((stdPart y : ℝ) : Surreal)) := infinitesimal_sub_stdPart hy
+  -- a birthday-minimal numeric representation of `y`
+  obtain ⟨g, hgn, hgy, hgb⟩ := birthday_eq_iGameBirthday y
+  haveI := hgn
+  have hslt := Cut.supLeft_lt_infRight_of_numeric g
+  -- the real cast fits between the option cuts of `g`
+  have hfitc : Cut.Fits ((stdPart y : ℝ) : Surreal) (Cut.supLeft g) (Cut.infRight g) := by
+    rw [Cut.Fits, Set.mem_inter_iff]
+    constructor
+    · rw [Cut.right_supLeft]
+      simp only [Set.mem_iInter, Set.mem_ofPred_eq]
+      intro i hi
+      haveI : i.Numeric := IGame.Numeric.of_mem_moves hi
+      obtain ⟨e, he⟩ := Surreal.birthday_lt_omega0_iff.1 ((birthday_mk_le i).trans_lt
+        ((IGame.birthday_lt_of_mem_moves hi).trans_le (hgb.le.trans hb)))
+      have he' : ((e : ℚ) : Surreal) = Surreal.mk i := he
+      have hiy : Surreal.mk i < y := by
+        rw [← hgy]
+        exact mk_lt_mk.2 (IGame.Numeric.left_lt hi)
+      have hlt : Surreal.mk i < ((stdPart y : ℝ) : Surreal) := by
+        by_contra hcon
+        rw [not_lt] at hcon
+        have h1 : Infinitesimal (Surreal.mk i - ((stdPart y : ℝ) : Surreal)) := by
+          refine hev.mono ?_
+          rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith)]
+          linarith
+        rw [← he', ← Real.toSurreal_ratCast, ← Real.toSurreal_sub] at h1
+        have h2 := eq_zero_of_infinitesimal_realCast h1
+        exact hnd e (by linarith [sub_eq_zero.1 h2])
+      rw [← toGame_mk, toGame_le_iff]
+      exact not_le.2 hlt
+    · rw [Cut.left_infRight]
+      simp only [Set.mem_iInter, Set.mem_ofPred_eq]
+      intro j hj
+      haveI : j.Numeric := IGame.Numeric.of_mem_moves hj
+      obtain ⟨e, he⟩ := Surreal.birthday_lt_omega0_iff.1 ((birthday_mk_le j).trans_lt
+        ((IGame.birthday_lt_of_mem_moves hj).trans_le (hgb.le.trans hb)))
+      have he' : ((e : ℚ) : Surreal) = Surreal.mk j := he
+      have hyj : y < Surreal.mk j := by
+        rw [← hgy]
+        exact mk_lt_mk.2 (IGame.Numeric.lt_right hj)
+      have hlt : ((stdPart y : ℝ) : Surreal) < Surreal.mk j := by
+        by_contra hcon
+        rw [not_lt] at hcon
+        have h1 : Infinitesimal (((stdPart y : ℝ) : Surreal) - Surreal.mk j) := by
+          refine hev.mono ?_
+          rw [abs_of_nonneg (by linarith), abs_of_nonpos (by linarith)]
+          linarith
+        rw [← he', ← Real.toSurreal_ratCast, ← Real.toSurreal_sub] at h1
+        have h2 := eq_zero_of_infinitesimal_realCast h1
+        exact hnd e (by linarith [sub_eq_zero.1 h2])
+      rw [← toGame_mk, toGame_le_iff]
+      exact not_le.2 hlt
+  -- `y` is the simplest fit; the real cast is a no-later fit; uniqueness finishes
+  have hy' : Cut.simplestBtwn hslt = y := by
+    rw [← toGame_inj, Cut.simplestBtwn_supLeft_infRight hslt, ← hgy, toGame_mk]
+  have hfity : Cut.Fits y (Cut.supLeft g) (Cut.infRight g) :=
+    hy' ▸ Cut.fits_simplestBtwn hslt
+  have hmin : ∀ v, Cut.Fits v (Cut.supLeft g) (Cut.infRight g) →
+      y.birthday ≤ v.birthday := by
+    intro v hv
+    have h := Cut.birthday_simplestBtwn_le_of_fits hv
+    rwa [hy'] at h
+  exact (Cut.eq_of_fits_of_birthday_le hfity hfitc hmin
+    ((birthday_realCast_le _).trans hynd)).symm
+
+/-- The exact birthday of a non-dyadic real: `ω`. -/
+theorem birthday_realCast_eq {r : ℝ} (hnd : ∀ d : Dyadic, r ≠ ((d : ℚ) : ℝ)) :
+    ((r : Surreal)).birthday = NatOrdinal.of Ordinal.omega0 := by
+  refine le_antisymm (birthday_realCast_le r) ?_
+  by_contra h
+  rw [not_le] at h
+  obtain ⟨q, hq⟩ := Surreal.birthday_lt_omega0_iff.1 h
+  have hq' : ((q : ℚ) : Surreal) = (r : Surreal) := hq
+  rw [← Real.toSurreal_ratCast, Real.toSurreal_inj] at hq'
+  exact hnd q hq'.symm
+
 end Surreal
 
 end
