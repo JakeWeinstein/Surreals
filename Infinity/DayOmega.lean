@@ -362,6 +362,139 @@ theorem birthday_realCast_eq {r : ℝ} (hnd : ∀ d : Dyadic, r ≠ ((d : ℚ) :
   rw [← Real.toSurreal_ratCast, Real.toSurreal_inj] at hq'
   exact hnd q hq'.symm
 
+/-! ### The day-`ω` classification near a dyadic -/
+
+/-- A positive rational-cast bound: a surreal strictly between two rational casts that
+differ infinitesimally forces the rationals equal. Auxiliary: an infinitesimal rational
+cast is zero. -/
+private theorem ratCast_eq_of_infinitesimal_sub {p q : ℚ}
+    (h : Infinitesimal (((p : ℚ) : Surreal) - ((q : ℚ) : Surreal))) : p = q := by
+  rw [← Real.toSurreal_ratCast, ← Real.toSurreal_ratCast, ← Real.toSurreal_sub] at h
+  have h2 := eq_zero_of_infinitesimal_realCast h
+  have h3 : ((p : ℚ) : ℝ) = ((q : ℚ) : ℝ) := by linarith [sub_eq_zero.1 h2]
+  exact_mod_cast h3
+
+/-- **The day-`ω` classification near a dyadic, positive side**: a surreal born by day
+`ω` lying infinitesimally above a dyadic `d` is exactly `d + ω⁻¹`. -/
+theorem eq_dyadic_add_wpow_neg_one_of_birthday_le {y : Surreal} {d : Dyadic}
+    (hinf : Infinitesimal (y - (d : Surreal))) (hpos : 0 < y - (d : Surreal))
+    (hb : y.birthday ≤ NatOrdinal.of Ordinal.omega0) :
+    y = (d : Surreal) + ω^ (-1 : Surreal) := by
+  -- `y` is not a dyadic
+  have hynd : NatOrdinal.of Ordinal.omega0 ≤ y.birthday := by
+    by_contra h
+    rw [not_le] at h
+    obtain ⟨q, hq⟩ := Surreal.birthday_lt_omega0_iff.1 h
+    have hq' : ((q : ℚ) : Surreal) = y := hq
+    rw [← hq'] at hinf hpos
+    have heq := ratCast_eq_of_infinitesimal_sub (p := (q : ℚ)) (q := (d : ℚ)) hinf
+    rw [heq] at hpos
+    simp at hpos
+  -- a birthday-minimal numeric representation of `y`
+  obtain ⟨g, hgn, hgy, hgb⟩ := birthday_eq_iGameBirthday y
+  haveI := hgn
+  have hslt := Cut.supLeft_lt_infRight_of_numeric g
+  -- the candidate fits between the option cuts of `g`
+  have hfitc : Cut.Fits ((d : Surreal) + ω^ (-1 : Surreal))
+      (Cut.supLeft g) (Cut.infRight g) := by
+    rw [Cut.Fits, Set.mem_inter_iff]
+    constructor
+    · rw [Cut.right_supLeft]
+      simp only [Set.mem_iInter, Set.mem_ofPred_eq]
+      intro i hi
+      haveI : i.Numeric := IGame.Numeric.of_mem_moves hi
+      obtain ⟨e, he⟩ := Surreal.birthday_lt_omega0_iff.1 ((birthday_mk_le i).trans_lt
+        ((IGame.birthday_lt_of_mem_moves hi).trans_le (hgb.le.trans hb)))
+      have he' : ((e : ℚ) : Surreal) = Surreal.mk i := he
+      have hiy : Surreal.mk i < y := by
+        rw [← hgy]
+        exact mk_lt_mk.2 (IGame.Numeric.left_lt hi)
+      -- the left option cannot exceed `d`
+      have hile : Surreal.mk i ≤ (d : Surreal) := by
+        by_contra hcon
+        rw [not_le] at hcon
+        have h1 : Infinitesimal (Surreal.mk i - (d : Surreal)) := by
+          refine hinf.mono ?_
+          rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith)]
+          linarith
+        rw [← he'] at h1 hcon
+        have := ratCast_eq_of_infinitesimal_sub (p := (e : ℚ)) (q := (d : ℚ)) h1
+        rw [this] at hcon
+        exact lt_irrefl _ hcon
+      have hlt : Surreal.mk i < (d : Surreal) + ω^ (-1 : Surreal) :=
+        hile.trans_lt (lt_add_of_pos_right _ (wpow_pos _))
+      rw [← toGame_mk, toGame_le_iff]
+      exact not_le.2 hlt
+    · rw [Cut.left_infRight]
+      simp only [Set.mem_iInter, Set.mem_ofPred_eq]
+      intro j hj
+      haveI : j.Numeric := IGame.Numeric.of_mem_moves hj
+      obtain ⟨e, he⟩ := Surreal.birthday_lt_omega0_iff.1 ((birthday_mk_le j).trans_lt
+        ((IGame.birthday_lt_of_mem_moves hj).trans_le (hgb.le.trans hb)))
+      have he' : ((e : ℚ) : Surreal) = Surreal.mk j := he
+      have hyj : y < Surreal.mk j := by
+        rw [← hgy]
+        exact mk_lt_mk.2 (IGame.Numeric.lt_right hj)
+      -- the right option lies strictly above `d`, at dyadic distance
+      have hdj : (d : Surreal) < Surreal.mk j := by
+        have h1 : (d : Surreal) < y := by linarith
+        linarith
+      have hde : d < e := by
+        rw [← he'] at hdj
+        have h1 : ((d : ℚ) : Surreal) < ((e : ℚ) : Surreal) := hdj
+        have h2 : ((d : Dyadic) : ℚ) < ((e : Dyadic) : ℚ) := by exact_mod_cast h1
+        exact_mod_cast h2
+      have hlt : (d : Surreal) + ω^ (-1 : Surreal) < Surreal.mk j := by
+        have hgap : (0 : Dyadic) < e - d := sub_pos.2 hde
+        have h2 := wpow_neg_one_lt_dyadic hgap
+        rw [dyadic_cast_sub] at h2
+        rw [← he']
+        have h3 : ((e : Dyadic) : Surreal) = ((e : ℚ) : Surreal) := rfl
+        rw [h3] at h2
+        linarith
+      rw [← toGame_mk, toGame_le_iff]
+      exact not_le.2 hlt
+  -- `y` is the simplest fit; the candidate is a no-later fit; uniqueness finishes
+  have hy' : Cut.simplestBtwn hslt = y := by
+    rw [← toGame_inj, Cut.simplestBtwn_supLeft_infRight hslt, ← hgy, toGame_mk]
+  have hfity : Cut.Fits y (Cut.supLeft g) (Cut.infRight g) :=
+    hy' ▸ Cut.fits_simplestBtwn hslt
+  have hmin : ∀ v, Cut.Fits v (Cut.supLeft g) (Cut.infRight g) →
+      y.birthday ≤ v.birthday := by
+    intro v hv
+    have h := Cut.birthday_simplestBtwn_le_of_fits hv
+    rwa [hy'] at h
+  exact (Cut.eq_of_fits_of_birthday_le hfity hfitc hmin
+    ((birthday_dyadic_add_wpow_neg_one_le d).trans hynd)).symm
+
+/-- **The day-`ω` classification near a dyadic**: a surreal born by day `ω`
+infinitesimally close to a dyadic `d` is `d` itself or one of its two neighbours
+`d ± ω⁻¹` — Conway's "d plus-or-minus 1/ω" census entries, machine-checked. -/
+theorem day_omega_near_dyadic {y : Surreal} {d : Dyadic}
+    (hinf : Infinitesimal (y - (d : Surreal)))
+    (hb : y.birthday ≤ NatOrdinal.of Ordinal.omega0) :
+    y = (d : Surreal) ∨ y = (d : Surreal) + ω^ (-1 : Surreal) ∨
+      y = (d : Surreal) - ω^ (-1 : Surreal) := by
+  rcases lt_trichotomy (y - (d : Surreal)) 0 with h | h | h
+  · -- mirror: apply the positive case to `-y` and `-d`
+    refine .inr (.inr ?_)
+    have hinf' : Infinitesimal (-y - ((-d : Dyadic) : Surreal)) := by
+      rw [dyadic_cast_neg]
+      have : -y - -(d : Surreal) = -(y - (d : Surreal)) := by ring
+      rw [this]
+      exact hinf.neg
+    have hpos' : 0 < -y - ((-d : Dyadic) : Surreal) := by
+      rw [dyadic_cast_neg]
+      linarith
+    have hb' : (-y).birthday ≤ NatOrdinal.of Ordinal.omega0 := by
+      rwa [birthday_neg]
+    have h1 := eq_dyadic_add_wpow_neg_one_of_birthday_le hinf' hpos' hb'
+    rw [dyadic_cast_neg] at h1
+    linarith
+  · refine .inl ?_
+    linarith
+  · exact .inr (.inl (eq_dyadic_add_wpow_neg_one_of_birthday_le hinf h hb))
+
 end Surreal
 
 end
