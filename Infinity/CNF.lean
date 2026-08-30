@@ -1,4 +1,4 @@
-import Infinity.TransfiniteSum
+import Infinity.NormalForm
 import CombinatorialGames.Surreal.Leading
 
 /-!
@@ -344,5 +344,123 @@ theorem finsum_eq_hahnSumO (hy : ∀ i j, i < j → j < n → y j < y i)
   (isCNFLength_finsum hy hr).eq_hahnSumO
 
 end FiniteCNF
+
+/-! ### Uniqueness: the extraction reads the series off any of its sums -/
+
+private theorem add_one_lt_of_isSuccLimit {β γ : Ordinal.{u}} (hγ : IsSuccLimit γ)
+    (h : β < γ) : β + 1 < γ := by
+  rw [← succ_eq_add_one]
+  exact hγ.succ_lt h
+
+/-- **Term recovery — the uniqueness direction of Conway normal form**: if `x` is *any*
+Hahn sum of a strictly dominating series of monomial terms (each term its own leading
+term: an ω-power series, the terms of a surreal Hahn series, …), then the normal-form
+extraction of `x` recovers the series — `cnfTerm x β = t β` at every stage with
+`β + 1 < α`. (At a final successor stage nothing can be recovered: the Hahn-sum
+conditions never constrain a last term.) -/
+theorem cnfTerm_eq_of_isHahnSumO {t : Ordinal.{u} → Surreal.{u}} {α : Ordinal.{u}}
+    {x : Surreal.{u}} (ht : IsStrictDom t α)
+    (hmon : ∀ β, β + 1 < α → (t β).leadingTerm = t β)
+    (hx : IsHahnSumO t α x) :
+    ∀ β, β + 1 < α → cnfTerm x β = t β := by
+  intro β
+  induction β using WellFoundedLT.induction with
+  | ind β ih =>
+    intro hβ1
+    have hβα : β < α := (lt_add_one_iff.2 le_rfl).trans hβ1
+    -- previously recovered terms give agreement of the canonical partial sums
+    have hcong : hahnSumO (cnfTerm x) β = hahnSumO t β :=
+      hahnSumO_congr fun δ hδ ↦ ih δ hδ ((add_one_le_iff.2 hδ).trans_lt hβα)
+    -- the stage-`β` residual is the `β`-th term plus strictly finer junk
+    have hres : cnfRes x β = t β + (x - hahnSumO t (β + 1)) := by
+      rw [cnfRes_eq_sub, hcong, hahnSumO_add_one]
+      ring
+    have hdom : (x - hahnSumO t (β + 1)) <ᵥ t β := by
+      rw [vlt_def]
+      exact lt_of_lt_of_le (ht (lt_add_one_iff.2 le_rfl) hβ1) (hx (β + 1) hβ1)
+    rw [cnfTerm, hres, leadingTerm_add_eq_left hdom, hmon β hβ1]
+
+/-- At limit lengths, *every* term of a monomial series is recovered from any of its Hahn
+sums. -/
+theorem cnfTerm_eq_of_isHahnSumO_of_isSuccLimit {t : Ordinal.{u} → Surreal.{u}}
+    {α : Ordinal.{u}} {x : Surreal.{u}} (hα : IsSuccLimit α) (ht : IsStrictDom t α)
+    (hmon : ∀ β < α, (t β).leadingTerm = t β) (hx : IsHahnSumO t α x) :
+    ∀ β < α, cnfTerm x β = t β := fun β hβ ↦
+  cnfTerm_eq_of_isHahnSumO ht
+    (fun δ hδ1 ↦ hmon δ ((lt_add_one_iff.2 le_rfl).trans hδ1)) hx β
+    (add_one_lt_of_isSuccLimit hα hβ)
+
+/-- **Uniqueness of representation at limit lengths**: two strictly dominating monomial
+series of the same limit length sharing even a single common Hahn sum are equal (below the
+length). Combined with `exists_isHahnSumO`, monomial series of limit length are determined
+by their sums — the injectivity half of Conway normal form at the level of term
+sequences. -/
+theorem eq_of_isHahnSumO_of_isHahnSumO {t u : Ordinal.{u} → Surreal.{u}}
+    {α : Ordinal.{u}} {x : Surreal.{u}} (hα : IsSuccLimit α)
+    (ht : IsStrictDom t α) (hu : IsStrictDom u α)
+    (hmont : ∀ β < α, (t β).leadingTerm = t β)
+    (hmonu : ∀ β < α, (u β).leadingTerm = u β)
+    (hxt : IsHahnSumO t α x) (hxu : IsHahnSumO u α x) :
+    ∀ β < α, t β = u β := fun β hβ ↦ by
+  rw [← cnfTerm_eq_of_isHahnSumO_of_isSuccLimit hα ht hmont hxt β hβ,
+    cnfTerm_eq_of_isHahnSumO_of_isSuccLimit hα hu hmonu hxu β hβ]
+
+/-! ### The evaluation of a surreal Hahn series is faithful -/
+
+/-- The terms of a surreal Hahn series are monomials (their own leading terms). -/
+theorem _root_.SurrealHahnSeries.leadingTerm_term (x : SurrealHahnSeries.{u})
+    {β : Ordinal.{u}} (hβ : β < x.length) : (x.term β).leadingTerm = x.term β := by
+  rw [SurrealHahnSeries.term_of_lt hβ]
+  exact leadingTerm_monomial _
+
+/-- **The evaluation is faithful**: the normal-form extraction reads the Hahn series back
+off its evaluation — `cnfTerm (evalHahn x) β = x.term β` whenever `β + 1 < x.length`. -/
+theorem cnfTerm_evalHahn (x : SurrealHahnSeries.{u}) {β : Ordinal.{u}}
+    (hβ : β + 1 < x.length) : cnfTerm (evalHahn x) β = x.term β :=
+  cnfTerm_eq_of_isHahnSumO x.isStrictDom_term
+    (fun _δ hδ1 ↦ x.leadingTerm_term ((lt_add_one_iff.2 le_rfl).trans hδ1))
+    (isHahnSumO_evalHahn x) β hβ
+
+/-- **At limit lengths the extraction of an evaluation terminates**, at exactly the
+series' length: `evalHahn x` has normal-form length `x.length` — the value's canonical
+normal form *is* the series it came from. -/
+theorem isCNFLength_evalHahn {x : SurrealHahnSeries.{u}} (hx : IsSuccLimit x.length) :
+    IsCNFLength (evalHahn x) x.length := by
+  have hrec : ∀ δ < x.length, cnfTerm (evalHahn x) δ = x.term δ := fun δ hδ ↦
+    cnfTerm_evalHahn x (add_one_lt_of_isSuccLimit hx hδ)
+  constructor
+  · rw [cnfRes_eq_sub, hahnSumO_congr hrec]
+    exact sub_eq_zero.2 rfl
+  · intro β hβ h0
+    have h1 := mk_sub_hahnSumO_cnfTerm (evalHahn x) β
+    rw [← cnfRes_eq_sub, h0, hrec β hβ,
+      show ArchimedeanClass.mk (0 : Surreal) = ⊤ from
+        ArchimedeanClass.mk_eq_top_iff.2 rfl] at h1
+    exact absurd (SurrealHahnSeries.term_eq_zero.1
+      (ArchimedeanClass.mk_eq_top_iff.1 h1.symm)) hβ.not_ge
+
+private theorem length_le_of_evalHahn_eq {x y : SurrealHahnSeries.{u}}
+    (hx : IsSuccLimit x.length) (hy : IsSuccLimit y.length)
+    (h : evalHahn x = evalHahn y) : y.length ≤ x.length := by
+  by_contra hlt
+  rw [not_le] at hlt
+  have h1 : cnfTerm (evalHahn y) x.length = y.term x.length :=
+    cnfTerm_evalHahn y (add_one_lt_of_isSuccLimit hy hlt)
+  rw [← h, cnfTerm, (isCNFLength_evalHahn hx).1, leadingTerm_zero] at h1
+  exact absurd (SurrealHahnSeries.term_eq_zero.1 h1.symm) hlt.not_ge
+
+/-- **Term-level injectivity of the evaluation**: two surreal Hahn series of limit length
+with the same evaluation have the same length and the same terms — uniqueness of the
+normal-form data, read off the value by the extraction. -/
+theorem term_congr_of_evalHahn_eq {x y : SurrealHahnSeries.{u}}
+    (hx : IsSuccLimit x.length) (hy : IsSuccLimit y.length)
+    (h : evalHahn x = evalHahn y) : ∀ β, x.term β = y.term β := by
+  have hlen : x.length = y.length :=
+    (length_le_of_evalHahn_eq hy hx h.symm).antisymm (length_le_of_evalHahn_eq hx hy h)
+  intro β
+  rcases lt_or_ge β x.length with hβ | hβ
+  · rw [← cnfTerm_evalHahn x (add_one_lt_of_isSuccLimit hx hβ), h,
+      cnfTerm_evalHahn y (add_one_lt_of_isSuccLimit hy (hlen ▸ hβ))]
+  · rw [SurrealHahnSeries.term_of_le hβ, SurrealHahnSeries.term_of_le (hlen ▸ hβ)]
 
 end Surreal
