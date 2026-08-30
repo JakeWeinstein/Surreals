@@ -21,3 +21,4 @@ import Infinity.OrdinalSum
 import Infinity.BirthdayHahn
 import Infinity.Identification
 import Infinity.ExpFin
+import Infinity.Laurent
