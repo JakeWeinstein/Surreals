@@ -48,17 +48,17 @@ two maps equal via `IsHahnSumO.mk_sub_le` + `hahnSumO_eq_iff`. A second bridge p
 truncations should compute the canonical partial sums `hahnSumO x.term i` — "truncation =
 partial sum".
 
-**What remains for full Conway normal form** (the honest map): (i) *termination of
-leading-term extraction* — iterating `x ↦ x - x.leadingTerm` (strictly finer at each step
-by the library's `mk_lt_mk_sub_leadingTerm`, and through limits by the residual calculus
-here) must reach `0` at some set-sized ordinal; classically this uses the smallness of the
-support, which is exactly the Hahn-series representation theorem being built upstream.
-(ii) *Uniqueness of representation* — distinct series have distinct sums (injectivity of
-`evalHahn`), for which the leading-scale calculus (`Surreal/Leading`) is the tool.
-Both are mapped, neither is attempted here. The informal mathematics is Conway
-(ONAG ch. 3) and Gonshor (ch. 5); Mizar has a formalization of Conway normal form by a
-different (sign-expansion) route; the theorems here are, to our knowledge, the first
-formalization of transfinite Hahn-sum evaluation semantics in any prover.
+**Beyond this file**: `Infinity.CNF` builds the leading-term extraction on top of the
+summation theorem, proving the representation identity (every surreal is a Hahn sum of
+its leading-term series, unconditionally) and the *uniqueness* direction (term recovery
+from any Hahn sum; `evalHahn` is injective on limit-length series). What then remains for
+full Conway normal form is a single statement: *termination of the extraction* — reaching
+`0` at some set-sized ordinal — which classically uses the smallness of the Hahn support,
+i.e. exactly the `Surreal ≃ SurrealHahnSeries` representation theorem being built
+upstream. The informal mathematics is Conway (ONAG ch. 3) and Gonshor (ch. 5); Mizar has
+a formalization of Conway normal form by a different (sign-expansion) route; the theorems
+here are, to our knowledge, the first formalization of transfinite Hahn-sum evaluation
+semantics in any prover.
 -/
 
 open ArchimedeanClass Order

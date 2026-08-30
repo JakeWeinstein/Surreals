@@ -35,17 +35,28 @@ statement.
   transfinite sum of its normal form**, a strictly dominating series of leading terms of
   length exactly `α`; at limit `α` it is moreover the birthday-minimal such sum
   (`IsCNFLength.birthday_le`).
-* `isCNFLength_monomial` : monomials `r·ω^y` have normal form of length `1` — the base
-  case of the finite theory.
+* `isCNFLength_monomial` / the `FiniteCNF` section: monomials have normal form of length
+  `1`, and every finite expansion `Σ_{i<n} r_i·ω^(y_i)` is its own normal form
+  (`isCNFLength_finsum`, `finsum_eq_hahnSumO`) — the finite-support case, complete.
+* **Uniqueness** (`cnfTerm_eq_of_isHahnSumO`): the extraction reads a strictly dominating
+  *monomial* series off **any** of its Hahn sums, at every stage `β` with `β + 1 < α`
+  (a final successor term is provably unrecoverable); hence two monomial series of the
+  same limit length sharing one Hahn sum agree (`eq_of_isHahnSumO_of_isHahnSumO`).
+* **Faithfulness and injectivity of evaluation**: `cnfTerm_evalHahn` (the extraction
+  recovers a `SurrealHahnSeries` from its `evalHahn`), `isCNFLength_evalHahn` (at limit
+  lengths the extraction of an evaluation *terminates*, at exactly the series' length —
+  values in the range of `evalHahn` have normal forms), and `evalHahn_inj` (a
+  limit-length series is determined by its value).
 
 **What remains open — the CNF termination problem.** Full Conway normal form is exactly
 the statement `∀ x, ∃ α, cnfRes x α = 0` (every extraction dies at some set-sized stage).
 Classically this follows from the smallness of the Hahn-support of a surreal, i.e. from
 the full `Surreal ≃ SurrealHahnSeries` representation theorem the library maintainer is
 building; the Mizar formalization of Conway normal form reached it through sign-expansion
-machinery. Termination is *not* attempted here; every other ingredient of the
-representation direction is above, kernel-checked, so termination is now the single
-missing statement between this development and full CNF.
+machinery. Termination is *not* attempted here; every other ingredient — representation
+while terminating, strict domination, canonicity, uniqueness, faithfulness — is above,
+kernel-checked, so termination is the single missing statement between this development
+and full CNF.
 -/
 
 open ArchimedeanClass Order
