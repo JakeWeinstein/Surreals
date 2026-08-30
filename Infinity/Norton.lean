@@ -563,6 +563,146 @@ interval, i.e. the genetic value of `∫₀^ω eˣ dx` for this option family. -
 def nortonIntegralExp : Surreal :=
   Cut.simplestBtwn nortonLo_lt_nortonHi
 
+/-! ### Horn (b): the simplest fit is the bare monomial `ω^ω` -/
+
+/-- `ω` as a `NatOrdinal` `ω`-power. -/
+theorem wpow_one_natOrdinal : ω^ (1 : NatOrdinal) = NatOrdinal.of Ordinal.omega0 := by
+  rw [NatOrdinal.wpow_def, NatOrdinal.val_one, Ordinal.opow_one]
+
+/-- **`birthday (ω^ω) = ω^ω`**: the surreal `ω^ω` is the image of the ordinal `ω^ω`
+under the ordinal embedding, whose birthday is itself. The third exactly-computed
+birthday of an infinite surreal in this development, after `ω` and `1 + ω`. -/
+theorem birthday_wpow_wpow_one :
+    (ω^ ω^ (1 : Surreal)).birthday = ω^ ω^ (1 : NatOrdinal) := by
+  have h : (ω^ ω^ (1 : Surreal)) = (ω^ ω^ (1 : NatOrdinal)).toSurreal := by
+    rw [toSurreal_wpow, toSurreal_wpow, NatOrdinal.toSurreal_one]
+  rw [h, birthday_toSurreal]
+
+/-- The witness partition `0 < ω − 1 < ω`. -/
+private def nortonP3 : ℕ → Surreal := fun i ↦
+  if i = 0 then 0 else if i = 1 then ω^ (1 : Surreal) - 1 else ω^ (1 : Surreal)
+
+private theorem nortonP3_zero : nortonP3 0 = 0 := rfl
+
+private theorem nortonP3_one : nortonP3 1 = ω^ (1 : Surreal) - 1 := rfl
+
+private theorem nortonP3_two : nortonP3 2 = ω^ (1 : Surreal) := rfl
+
+private theorem not_isFinite_wpow_one_sub_one : ¬ IsFinite (ω^ (1 : Surreal) - 1) := by
+  intro h
+  exact not_isFinite_wpow_one (by simpa using h.add isFinite_one)
+
+private theorem isExpPartitionOn_nortonP3 :
+    IsExpPartitionOn nortonP3 2 0 (ω^ (1 : Surreal)) := by
+  refine ⟨⟨nortonP3_zero, nortonP3_two, ?_⟩, ?_⟩
+  · intro i hi
+    match i, hi with
+    | 0, _ =>
+      rw [nortonP3_zero, nortonP3_one]
+      have := one_lt_wpow_one
+      linarith
+    | 1, _ =>
+      rw [nortonP3_one, nortonP3_two]
+      linarith [one_lt_wpow_one]
+  · intro i hi
+    match i, hi with
+    | 0, _ => exact .inl (nortonP3_zero ▸ isFinite_zero)
+    | 1, _ =>
+      refine .inr ?_
+      rw [nortonP3_one]
+      have h : ω^ (1 : Surreal) - 1 - ω^ (1 : Surreal) = -1 := by ring
+      rw [h]
+      exact isFinite_one.neg
+    | 2, _ =>
+      refine .inr ?_
+      rw [nortonP3_two, sub_self]
+      exact isFinite_zero
+
+private theorem lowerSumExp_nortonP3 :
+    lowerSumExp nortonP3 2 =
+      (ω^ (1 : Surreal) - 1) + ω^ ω^ (1 : Surreal) * expFin (-1) := by
+  rw [lowerSumExp, Finset.sum_range_succ, Finset.sum_range_one]
+  rw [nortonP3_zero, nortonP3_one, nortonP3_two,
+    nortonExp_of_isFinite isFinite_zero, expFin_zero,
+    nortonExp_of_not_isFinite not_isFinite_wpow_one_sub_one]
+  have harg : ω^ (1 : Surreal) - 1 - ω^ (1 : Surreal) = -1 := by ring
+  rw [harg]
+  ring
+
+/-- **Every fit dominates `n·ωᵐ` for all naturals**: the single witness partition
+`0 < ω − 1 < ω` already places every fit above `e⁻¹·ω^ω`-scale. -/
+theorem wpow_natCast_mul_lt_of_fits {w : Surreal}
+    (hw : Cut.Fits w nortonLo nortonHi) (m k : ℕ) :
+    ω^ (m : Surreal) * (k : Surreal) < w := by
+  have hlow := (fits_norton_iff.1 hw nortonP3 2 isExpPartitionOn_nortonP3).1
+  rw [lowerSumExp_nortonP3] at hlow
+  obtain ⟨q, hq0, hq1⟩ := exists_rat_btwn (Real.exp_pos (-1))
+  have hqV : ((q : ℝ) : Surreal) * ω^ ω^ (1 : Surreal) <
+      ω^ ω^ (1 : Surreal) * expFin (-1) := by
+    rw [mul_comm]
+    refine mul_lt_mul_of_pos_left ?_ (wpow_pos _)
+    have hneg : ((-1 : ℝ) : Surreal) = -1 := by
+      rw [Real.toSurreal_neg, Real.toSurreal_one]
+    rw [← hneg, expFin_realCast]
+    exact Real.toSurreal_lt_iff.2 hq1
+  have hmk : (k : Surreal) * ω^ (m : Surreal) <
+      ((q : ℝ) : Surreal) * ω^ ω^ (1 : Surreal) := by
+    have h := mul_wpow_lt_mul_wpow (k : ℝ) (show (0 : ℝ) < (q : ℝ) from hq0)
+      (natCast_lt_wpow_one m)
+    rwa [Real.toSurreal_natCast] at h
+  have hΩ0 : (0 : Surreal) ≤ ω^ (1 : Surreal) - 1 := by
+    linarith [one_lt_wpow_one]
+  calc ω^ (m : Surreal) * (k : Surreal) = (k : Surreal) * ω^ (m : Surreal) := by ring
+    _ < ((q : ℝ) : Surreal) * ω^ ω^ (1 : Surreal) := hmk
+    _ < ω^ ω^ (1 : Surreal) * expFin (-1) := hqV
+    _ ≤ (ω^ (1 : Surreal) - 1) + ω^ ω^ (1 : Surreal) * expFin (-1) :=
+        le_add_of_nonneg_left hΩ0
+    _ < w := hlow
+
+/-- **Every fit dominates the surreal image of every ordinal below `ω^ω`** — the
+ordinal decomposition `o < ω^ω → o < ωᵐ·k` transported along the (birthday-preserving)
+ordinal embedding. -/
+theorem toSurreal_lt_of_fits {w : Surreal} (hw : Cut.Fits w nortonLo nortonHi)
+    {o : NatOrdinal} (ho : o < ω^ ω^ (1 : NatOrdinal)) : o.toSurreal < w := by
+  obtain ⟨z, hz, k, hzk⟩ :=
+    (NatOrdinal.lt_wpow_iff (NatOrdinal.wpow_ne_zero 1)).1 ho
+  have hzω : z < NatOrdinal.of Ordinal.omega0 := wpow_one_natOrdinal ▸ hz
+  obtain ⟨mz, rfl⟩ := NatOrdinal.lt_omega0.1 hzω
+  have h1 : o.toSurreal < (ω^ (mz : NatOrdinal) * (k : NatOrdinal)).toSurreal :=
+    NatOrdinal.toSurreal.lt_iff_lt.2 hzk
+  rw [NatOrdinal.toSurreal_mul, toSurreal_wpow, NatOrdinal.toSurreal_natCast,
+    NatOrdinal.toSurreal_natCast] at h1
+  exact h1.trans (wpow_natCast_mul_lt_of_fits hw mz k)
+
+/-- **NORTON'S ERROR AS A THEOREM**: the genetic (simplest-fit) exponential integral
+over `[0, ω]` evaluates to the bare monomial `ω^ω = e^ω` — *Norton's wrong value*.
+Every fit of the cut exceeds every ordinal below `ω^ω`, hence (by
+`le_toSurreal_birthday`) is born at or after day `ω^ω`; the monomial `ω^ω` fits and is
+born exactly on day `ω^ω`; so it is the simplest fit. The simplicity principle at the
+heart of every genetic definition selects the value that violates the fundamental
+theorem of calculus. -/
+theorem nortonIntegralExp_eq_wpow_wpow :
+    nortonIntegralExp = ω^ ω^ (1 : Surreal) := by
+  rw [nortonIntegralExp, Cut.simplestBtwn_eq_iff]
+  refine ⟨fits_norton_wpow, fun w hw ↦ ?_⟩
+  rw [birthday_wpow_wpow_one]
+  by_contra hlt
+  rw [not_le] at hlt
+  exact absurd (le_toSurreal_birthday w) (not_le.2 (toSurreal_lt_of_fits hw hlt))
+
+/-- **The two-horned theorem, packaged**: the genetic exponential integral is `ω^ω`;
+the correct value `ω^ω − 1` fits the same cut; and the genetic value is not the correct
+value. Simplest-fit is structurally not integration. -/
+theorem norton_error :
+    nortonIntegralExp = ω^ ω^ (1 : Surreal) ∧
+      Cut.Fits (ω^ ω^ (1 : Surreal) - 1) nortonLo nortonHi ∧
+      nortonIntegralExp ≠ ω^ ω^ (1 : Surreal) - 1 := by
+  refine ⟨nortonIntegralExp_eq_wpow_wpow, fits_norton_wpow_sub_one, ?_⟩
+  rw [nortonIntegralExp_eq_wpow_wpow]
+  intro h
+  have h1 : (0 : Surreal) = -1 := by linarith
+  norm_num at h1
+
 end Surreal
 
 end
