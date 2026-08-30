@@ -20,3 +20,4 @@ import Infinity.Sqrt
 import Infinity.OrdinalSum
 import Infinity.BirthdayHahn
 import Infinity.GonshorExp
+import Infinity.GonshorExpTower
