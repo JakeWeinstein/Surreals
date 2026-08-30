@@ -241,6 +241,84 @@ theorem mk_expFin_add_sub_mul {x y : Surreal} (hx : IsFinite x) (hy : IsFinite y
     mk_realCast (Real.exp_pos _).ne', zero_add]
   exact mk_expInf_add_sub_mul hε hδ hx0 hy0 n
 
+/-! ### The exponential differential equation at real points -/
+
+private theorem partialSum_expSeries_three {σ : Surreal} :
+    partialSum (fun k ↦ σ ^ k / ((k.factorial : ℕ) : Surreal)) 3 = 1 + σ + σ ^ 2 / 2 := by
+  rw [partialSum, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_one]
+  norm_num
+
+/-- **A uniform quadratic bound for the infinitesimal exponential**:
+`|expInf' ε − 1 − ε| ≤ (3/2)·ε²`, with a constant independent of `ε`. The Hahn-sum
+residual bound at stage 3 gives `|expInf' ε − s₃| ≤ k·|ε³/6|` with `k` *depending on
+`ε`* — but infinitesimality gives `k·|ε| < 1` for every natural `k`, so the dependence
+cancels. This is the quantitative bridge from domination-order control to the honest
+`O(ε²)` control that `HasDerivS` demands. -/
+theorem abs_expInf'_sub_one_sub_le {ε : Surreal} (hε : Infinitesimal ε) :
+    |expInf' ε - 1 - ε| ≤ 3 / 2 * ε ^ 2 := by
+  rcases eq_or_ne ε 0 with rfl | h0
+  · simp
+  · rw [expInf'_of_ne hε h0]
+    have h3 := isHahnSum_expInf hε h0 3
+    rw [partialSum_expSeries_three] at h3
+    obtain ⟨k, hk⟩ := ArchimedeanClass.mk_le_mk.1 h3
+    simp only at hk
+    have ht3 : (ε ^ 3 / (((3 : ℕ).factorial : ℕ) : Surreal)) = ε ^ 3 / 6 := by norm_num
+    rw [ht3] at hk
+    -- `k • |ε³/6| ≤ ε²` because `k·|ε| < 1`
+    have hkε : (k : Surreal) * |ε| < 1 := by
+      have h := infinitesimal_iff.1 hε k
+      rwa [nsmul_eq_mul] at h
+    have hbound : (k • |ε ^ 3 / 6| : Surreal) ≤ ε ^ 2 := by
+      rw [nsmul_eq_mul]
+      have h6 : |(6 : Surreal)| = 6 := abs_of_pos (by norm_num)
+      have habs3 : |ε ^ 3 / 6| = ε ^ 2 * |ε| / 6 := by
+        rw [abs_div, h6, abs_pow]
+        rw [show |ε| ^ 3 = |ε| ^ 2 * |ε| by ring, sq_abs]
+      rw [habs3]
+      have h1 : (k : Surreal) * (ε ^ 2 * |ε| / 6) = (k * |ε|) * ε ^ 2 / 6 := by ring
+      rw [h1]
+      have h2 : (k : Surreal) * |ε| * ε ^ 2 ≤ 1 * ε ^ 2 :=
+        mul_le_mul_of_nonneg_right hkε.le (sq_nonneg ε)
+      rw [one_mul] at h2
+      have h4 := sq_nonneg ε
+      linarith
+    have hres : |expInf ε hε h0 - (1 + ε + ε ^ 2 / 2)| ≤ ε ^ 2 := hk.trans hbound
+    have hsplit : |expInf ε hε h0 - 1 - ε| ≤
+        |expInf ε hε h0 - (1 + ε + ε ^ 2 / 2)| + |ε ^ 2 / 2| := by
+      calc |expInf ε hε h0 - 1 - ε|
+          = |(expInf ε hε h0 - (1 + ε + ε ^ 2 / 2)) + ε ^ 2 / 2| := by
+            congr 1
+            ring
+        _ ≤ _ := abs_add_le _ _
+    have habs2 : |ε ^ 2 / 2| = ε ^ 2 / 2 := by
+      rw [abs_div, abs_of_nonneg (sq_nonneg ε)]
+      norm_num
+    rw [habs2] at hsplit
+    linarith
+
+/-- **The exponential differential equation at real points**: `expFin` has surreal-point
+derivative `expFin r` at every real `r` — `exp′ = exp`, in the strong `O(ε²)` sense over
+*all* infinitesimal increments. The first verified instance of the exponential ODE on the
+surreals. (At finite points with nonzero infinitesimal part the same statement runs into
+the canonical-sum variation problem recorded in `Infinity.Laurent`.) -/
+theorem hasDerivS_expFin_realCast (r : ℝ) :
+    HasDerivS expFin (r : Surreal) (expFin (r : Surreal)) := by
+  refine ⟨|expFin (r : Surreal)| * (3 / 2), fun ε hε ↦ ?_⟩
+  have hkey : expFin ((r : Surreal) + ε) = expFin (r : Surreal) * expInf' ε := by
+    rcases eq_or_ne ε 0 with rfl | h0
+    · rw [add_zero, expInf'_zero, mul_one]
+    · rw [expFin_realCast_add r hε.isFinite, expFin_of_infinitesimal hε h0,
+        expInf'_of_ne hε h0]
+  calc |expFin ((r : Surreal) + ε) - expFin (r : Surreal) - expFin (r : Surreal) * ε|
+      = |expFin (r : Surreal)| * |expInf' ε - 1 - ε| := by
+        rw [hkey, ← abs_mul]
+        congr 1
+        ring
+    _ ≤ |expFin (r : Surreal)| * (3 / 2 * ε ^ 2) :=
+        mul_le_mul_of_nonneg_left (abs_expInf'_sub_one_sub_le hε) (abs_nonneg _)
+    _ = |expFin (r : Surreal)| * (3 / 2) * ε ^ 2 := by ring
+
 end Surreal
 
 end
