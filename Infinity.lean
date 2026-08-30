@@ -36,3 +36,4 @@ import Infinity.Leibniz
 import Infinity.Expectation
 import Infinity.PascalWager
 import Infinity.SeriesLimits
+import Infinity.Census
