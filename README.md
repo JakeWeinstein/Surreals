@@ -77,6 +77,7 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The geometric halo is empty below `ω²`** | Every Hahn sum of `Σ ω⁻ᵏ` is born at or after day `ω·ω`: Hahn sums are strictly finer than every scale, but the tube below `ω²` holds only partial sums, which are not | [`Infinity/GeometricClose.lean`](Infinity/GeometricClose.lean) |
 | **`birthday (ω/(ω−1)) = ω·ω` exactly** | The Conway-inverse upper bound meets the halo-emptiness lower bound | [`Infinity/GeometricClose.lean`](Infinity/GeometricClose.lean) |
 | **THE CANONICAL GEOMETRIC SUM** | **`hahnSum (Σ_{k<ω} ω⁻ᵏ) = ω/(ω−1)`** — the repo's oldest conjecture, closed: birthday-simplicity *selects* the true value; the first computed value of the canonical transfinite summation operator on a series with no exact finite form, born exactly on day `ω·ω`. Any Hahn sum born by day `ω·ω` **is** `ω/(ω−1)` | [`Infinity/GeometricClose.lean`](Infinity/GeometricClose.lean) |
+| **THE `ω²`-HARDNESS THEOREM** | The tube census generalized to **every** strictly dominating series `Σ cₖ·ω⁻ᵏ` with nonzero dyadic coefficients, around *any* of its Hahn sums (which can serve as its own tube center): **no monomial series has any consistent sum born below day `ω²`** — transfinite summation is uniformly expensive, whatever the coefficients | [`Infinity/MonomialCensus.lean`](Infinity/MonomialCensus.lean) |
 
 ## The one-paragraph story
 
