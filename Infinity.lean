@@ -29,6 +29,7 @@ import Infinity.Identification
 import Infinity.ExpFin
 import Infinity.Laurent
 import Infinity.Darboux
+import Infinity.Norton
 import Infinity.Leibniz
 import Infinity.Expectation
 import Infinity.PascalWager
