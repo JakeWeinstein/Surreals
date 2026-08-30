@@ -278,14 +278,14 @@ theorem lt_of_isHahnSum_of_head_lt (hx : IsHahnSum t x) (hy : IsHahnSum u y)
 
 /-! #### Rescaling laws -/
 
-theorem partialSum_const_mul (c : Surreal) (t : ℕ → Surreal) (n : ℕ) :
+private theorem partialSum_const_mul (c : Surreal) (t : ℕ → Surreal) (n : ℕ) :
     partialSum (fun k ↦ c * t k) n = c * partialSum t n := by
   simp [partialSum, Finset.mul_sum]
 
 /-- Consistent expected utilities rescale: if `x` sums the series `t`, then `c * x` sums
 the rescaled series `c * t`. (Rescaling all stakes, or a common factor of all probability
 weights, rescales the expectation.) -/
-theorem IsHahnSum.const_mul (hx : IsHahnSum t x) (c : Surreal) :
+private theorem IsHahnSum.const_mul (hx : IsHahnSum t x) (c : Surreal) :
     IsHahnSum (fun n ↦ c * t n) (c * x) := by
   intro n
   show ArchimedeanClass.mk (c * t n) ≤ _
