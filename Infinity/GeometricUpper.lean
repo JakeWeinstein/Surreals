@@ -680,7 +680,7 @@ theorem birthday_eps0_pow_le (k : ℕ) :
     exact_mod_cast Nat.le_succ (k + 1)
 
 /-- The bounding shape `ω·m + m` sits below `ω·ω`. -/
-private theorem omega_shape_le_omega_mul_omega (m : ℕ) {x : NatOrdinal}
+theorem omega_shape_le_omega_mul_omega (m : ℕ) {x : NatOrdinal}
     (h : x ≤ NatOrdinal.of Ordinal.omega0 * (m : NatOrdinal) + (m : NatOrdinal)) :
     x ≤ NatOrdinal.of Ordinal.omega0 * NatOrdinal.of Ordinal.omega0 := by
   refine h.trans ?_

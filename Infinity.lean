@@ -41,3 +41,4 @@ import Infinity.HaloRealization
 import Infinity.GeometricBirthday
 import Infinity.DayOmegaOne
 import Infinity.GeometricUpper
+import Infinity.InverseBirthday
