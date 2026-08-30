@@ -175,6 +175,104 @@ theorem nortonExp_pos (x : Surreal) : 0 < nortonExp x := by
   · rw [nortonExp_of_not_isFinite h]
     exact mul_pos (wpow_pos _) (expFin_pos' _)
 
+/-! ### Partition helpers -/
+
+/-- The points of a partition are monotone in the index. -/
+theorem IsPartitionOn.mono {x : ℕ → Surreal} {n : ℕ} {a b : Surreal}
+    (hp : IsPartitionOn x n a b) {i j : ℕ} (hij : i ≤ j) (hjn : j ≤ n) : x i ≤ x j := by
+  obtain ⟨-, -, hmono⟩ := hp
+  obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le hij
+  clear hij
+  induction d with
+  | zero => simp
+  | succ d ih =>
+    have h2 : x (i + d) ≤ x (i + d + 1) := hmono (i + d) (by omega)
+    have h1 : x i ≤ x (i + d) := ih (by omega)
+    have h3 : i + (d + 1) = (i + d) + 1 := by omega
+    rw [h3]
+    exact h1.trans h2
+
+/-- Partition points lie above the left endpoint. -/
+theorem IsPartitionOn.left_le {x : ℕ → Surreal} {n : ℕ} {a b : Surreal}
+    (hp : IsPartitionOn x n a b) {i : ℕ} (hi : i ≤ n) : a ≤ x i := by
+  rw [← hp.1]
+  exact hp.mono (Nat.zero_le i) hi
+
+/-- Partition points lie below the right endpoint. -/
+theorem IsPartitionOn.le_right {x : ℕ → Surreal} {n : ℕ} {a b : Surreal}
+    (hp : IsPartitionOn x n a b) {i : ℕ} (hi : i ≤ n) : x i ≤ b := by
+  rw [← hp.2.1]
+  exact hp.mono hi le_rfl
+
+/-! ### Lattice partitions and exponential Darboux sums -/
+
+/-- The two-galaxy `ω`-lattice: the points at which the Route-A exponential is
+meaningful. -/
+def IsExpLatticePt (x : Surreal) : Prop :=
+  IsFinite x ∨ IsFinite (x - ω^ (1 : Surreal))
+
+/-- A monotone partition of `[a, b]` through lattice points. -/
+def IsExpPartitionOn (x : ℕ → Surreal) (n : ℕ) (a b : Surreal) : Prop :=
+  IsPartitionOn x n a b ∧ ∀ i ≤ n, IsExpLatticePt (x i)
+
+/-- The lower exponential Darboux sum: left tags. -/
+def lowerSumExp (x : ℕ → Surreal) (n : ℕ) : Surreal :=
+  ∑ i ∈ Finset.range n, nortonExp (x i) * (x (i + 1) - x i)
+
+/-- The upper exponential Darboux sum: right tags. -/
+def upperSumExp (x : ℕ → Surreal) (n : ℕ) : Surreal :=
+  ∑ i ∈ Finset.range n, nortonExp (x (i + 1)) * (x (i + 1) - x i)
+
+/-- The cut just above all lower exponential Darboux sums on `[0, ω]`. -/
+def nortonLo : Cut :=
+  ⨆ p : {q : (ℕ → Surreal) × ℕ // IsExpPartitionOn q.1 q.2 0 (ω^ (1 : Surreal))},
+    Cut.rightSurreal (lowerSumExp p.1.1 p.1.2)
+
+/-- The cut just below all upper exponential Darboux sums on `[0, ω]`. -/
+def nortonHi : Cut :=
+  ⨅ p : {q : (ℕ → Surreal) × ℕ // IsExpPartitionOn q.1 q.2 0 (ω^ (1 : Surreal))},
+    Cut.leftSurreal (upperSumExp p.1.1 p.1.2)
+
+/-- A surreal fits between the exponential Darboux cuts iff it lies strictly between
+every lower and every upper exponential sum. -/
+theorem fits_norton_iff {z : Surreal} :
+    Cut.Fits z nortonLo nortonHi ↔
+      ∀ x n, IsExpPartitionOn x n 0 (ω^ (1 : Surreal)) →
+        lowerSumExp x n < z ∧ z < upperSumExp x n := by
+  rw [Cut.Fits, Set.mem_inter_iff, ← Cut.notMem_left_iff]
+  unfold nortonLo nortonHi
+  simp only [Cut.left_iSup, Cut.left_iInf, Cut.left_rightSurreal, Cut.left_leftSurreal,
+    Set.mem_iUnion, Set.mem_iInter, Set.mem_Iic, Set.mem_Iio, not_exists, not_le]
+  constructor
+  · rintro ⟨h1, h2⟩ x n hp
+    exact ⟨h1 ⟨(x, n), hp⟩, h2 ⟨(x, n), hp⟩⟩
+  · intro h
+    exact ⟨fun p ↦ (h p.1.1 p.1.2 p.2).1, fun p ↦ (h p.1.1 p.1.2 p.2).2⟩
+
+/-! ### The splitting index of a lattice partition -/
+
+/-- Every lattice partition of `[0, ω]` splits at a last finite point: everything at or
+below index `m` is finite, everything above lies in the top galaxy `ω + finite`. -/
+theorem exists_split {x : ℕ → Surreal} {n : ℕ}
+    (hp : IsExpPartitionOn x n 0 (ω^ (1 : Surreal))) :
+    ∃ m < n, (∀ i ≤ m, IsFinite (x i)) ∧
+      ∀ i, m < i → i ≤ n → IsFinite (x i - ω^ (1 : Surreal)) ∧ ¬ IsFinite (x i) := by
+  classical
+  obtain ⟨hpart, hlat⟩ := hp
+  have h0fin : IsFinite (x 0) := by rw [hpart.1]; exact isFinite_zero
+  have hmfin : IsFinite (x (Nat.findGreatest (fun i ↦ IsFinite (x i)) n)) :=
+    Nat.findGreatest_spec (P := fun i ↦ IsFinite (x i)) (Nat.zero_le n) h0fin
+  have hnfin : ¬ IsFinite (x n) := by rw [hpart.2.1]; exact not_isFinite_wpow_one
+  have hmn : Nat.findGreatest (fun i ↦ IsFinite (x i)) n < n :=
+    (Nat.findGreatest_le n).lt_of_ne fun h ↦ hnfin (h ▸ hmfin)
+  refine ⟨_, hmn, fun i hi ↦ ?_, fun i hmi hin ↦ ?_⟩
+  · exact isFinite_of_nonneg_of_le (hpart.left_le (by omega))
+      (hpart.mono hi (by omega)) hmfin
+  · have hnot : ¬ IsFinite (x i) := Nat.findGreatest_is_greatest hmi hin
+    rcases hlat i hin with h | h
+    · exact absurd h hnot
+    · exact ⟨h, hnot⟩
+
 end Surreal
 
 end
