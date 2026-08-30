@@ -214,4 +214,156 @@ theorem gonshorExp_omega_mul (m : ℕ) :
     _ = (ω^ ω^ (1 : Surreal)) ^ (m + 1) := by
         rw [mul_comm (ω^ (1 : Surreal)) _, wpow_natCast_mul]
 
+/-! ### `ω²` as a limit of limits -/
+
+/-- `2` is the left-cut of `{1}` (Conway's day-2 representation). -/
+theorem two_eq_ofSets_one : (2 : Surreal) = !{({1} : Set Surreal) | ∅} := by
+  haveI := numeric_ofSets_out_left ({1} : Set Surreal)
+  rw [surreal_ofSets_left_rep ({1} : Set Surreal), ← one_add_one_eq_two,
+    ← Surreal.mk_one, ← Surreal.mk_add]
+  apply Surreal.mk_eq
+  apply equiv_of_exists_le
+  · rw [moves_add]
+    rintro a (⟨w, hw, rfl⟩ | ⟨w, hw, rfl⟩) <;> rw [leftMoves_one] at hw <;>
+      rw [Set.mem_singleton_iff] at hw <;> subst hw
+    · refine ⟨Surreal.out 1, ?_, ?_⟩
+      · rw [leftMoves_ofSets]
+        exact Set.mem_image_of_mem _ (Set.mem_singleton 1)
+      · rw [← Surreal.mk_le_mk]
+        simp
+    · refine ⟨Surreal.out 1, ?_, ?_⟩
+      · rw [leftMoves_ofSets]
+        exact Set.mem_image_of_mem _ (Set.mem_singleton 1)
+      · rw [← Surreal.mk_le_mk]
+        simp
+  · intro a ha
+    rw [moves_add] at ha
+    simp only [rightMoves_one, Set.image_empty, Set.union_self,
+      Set.mem_empty_iff_false] at ha
+  · rw [leftMoves_ofSets]
+    rintro b ⟨w, hw, rfl⟩
+    rw [Set.mem_singleton_iff] at hw
+    subst hw
+    refine ⟨0 + 1, ?_, ?_⟩
+    · refine add_right_mem_moves_add ?_ _
+      rw [leftMoves_one]
+      exact Set.mem_singleton 0
+    · rw [← Surreal.mk_le_mk]
+      simp
+  · intro b hb
+    rw [rightMoves_ofSets] at hb
+    exact absurd hb (Set.notMem_empty b)
+
+/-- **`ω²` is the left-cut of the rungs**: `ω^2 = !{ω·n | ∅}`. -/
+theorem wpow_two_rep :
+    ω^ (2 : Surreal) =
+      !{Set.range (fun n : ℕ ↦ ω^ (1 : Surreal) * (n : Surreal)) | ∅} := by
+  rw [two_eq_ofSets_one, wpow_ofSets]
+  apply ofSets_left_eq_of_cofinal
+  · rintro z (rfl | ⟨r, hr, x, hx, rfl⟩)
+    · exact ⟨_, ⟨0, rfl⟩, by simp⟩
+    · rw [Set.mem_singleton_iff] at hx
+      subst hx
+      obtain ⟨j, hj⟩ := exists_nat_ge (r : ℚ)
+      refine ⟨_, ⟨j, rfl⟩, ?_⟩
+      show (r : Surreal) * ω^ (1 : Surreal) ≤ ω^ (1 : Surreal) * ((j : ℕ) : Surreal)
+      rw [mul_comm]
+      exact mul_le_mul_of_nonneg_left (by exact_mod_cast hj) (wpow_nonneg _)
+  · rintro z ⟨k, rfl⟩
+    refine ⟨(((k + 1 : ℕ) : Dyadic) : Surreal) * ω^ (1 : Surreal),
+      Set.mem_insert_of_mem _ (Set.mem_image2_of_mem ?_ (Set.mem_singleton 1)), ?_⟩
+    · rw [Set.mem_Ioi]
+      exact_mod_cast Nat.succ_pos k
+    · show ω^ (1 : Surreal) * ((k : ℕ) : Surreal) ≤
+        (((k + 1 : ℕ) : Dyadic) : Surreal) * ω^ (1 : Surreal)
+      rw [mul_comm (ω^ (1 : Surreal)) _]
+      exact mul_le_mul_of_nonneg_right (by exact_mod_cast Nat.le_succ k) (wpow_nonneg _)
+
+/-! ### `exp (ω²) = ω^(ω²)` -/
+
+private theorem mk_wpow_lt_zero {x : Surreal} (hx : 0 < x) :
+    ArchimedeanClass.mk (ω^ x) < 0 := by
+  have h := archimedeanClassMk_wpow_strictAnti hx
+  simpa using h
+
+private theorem mk_wpow_two_sub (n : ℕ) :
+    ArchimedeanClass.mk (ω^ (2 : Surreal) - ω^ (1 : Surreal) * (n : Surreal)) =
+      ArchimedeanClass.mk (ω^ (2 : Surreal)) := by
+  obtain rfl | hn := Nat.eq_zero_or_pos n
+  · rw [Nat.cast_zero, mul_zero, sub_zero]
+  · rw [sub_eq_add_neg]
+    apply ArchimedeanClass.mk_add_eq_mk_left
+    rw [ArchimedeanClass.mk_neg, ArchimedeanClass.mk_mul, mk_natCast_eq_zero hn.ne',
+      add_zero]
+    exact archimedeanClassMk_wpow_strictAnti one_lt_two
+
+private theorem not_isFinite_wpow_two_sub (n : ℕ) :
+    ¬ IsFinite (ω^ (2 : Surreal) - ω^ (1 : Surreal) * (n : Surreal)) := by
+  intro hfin
+  have h0 := isFinite_def.1 hfin
+  rw [mk_wpow_two_sub n] at h0
+  exact absurd h0 (not_le.2 (mk_wpow_lt_zero two_pos))
+
+private theorem wlog_wpow_two_sub (n : ℕ) :
+    wlog (ω^ (2 : Surreal) - ω^ (1 : Surreal) * (n : Surreal)) = 2 := by
+  have h := wlog_congr (veq_def.2 (mk_wpow_two_sub n))
+  rw [h, wlog_wpow]
+
+/-- **The exponential of `ω²` is `ω^(ω²)`** (Gonshor). At the representation
+`ω² = !{ω·n | ∅}`, Gonshor's formula — seeded with the previous rungs' values
+`exp (ω·n) = (ω^ω)^n` from `gonshorExp_omega_mul` — evaluates to `ω^(ω²)`. This is the
+first rung whose left options are themselves infinite limits: the recursion genuinely
+recursing. -/
+theorem gonshorExp_omega_sq :
+    (!{insert 0 (Set.range fun p : ℕ × ℕ ↦
+        (ω^ ω^ (1 : Surreal)) ^ p.1 *
+          expPartial p.2 (ω^ (2 : Surreal) - ω^ (1 : Surreal) * (p.1 : Surreal))) | ∅} : Surreal)
+      = ω^ ω^ (2 : Surreal) := by
+  have hv : ∀ n : ℕ, 0 < (ω^ ω^ (1 : Surreal)) ^ n := fun n ↦ pow_pos (wpow_pos _) n
+  have hs : ∀ n : ℕ, ω^ (1 : Surreal) * (n : Surreal) < ω^ (2 : Surreal) := by
+    intro n
+    have h2 : ω^ (2 : Surreal) = ω^ (1 : Surreal) * ω^ (1 : Surreal) := by
+      rw [← wpow_add, one_add_one_eq_two]
+    rw [h2]
+    exact mul_lt_mul_of_pos_left (natCast_lt_wpow_one n) (wpow_pos _)
+  have h := gonshorCut_eq_wpow (a := ω^ (2 : Surreal))
+    (s := fun n : ℕ ↦ ω^ (1 : Surreal) * (n : Surreal))
+    (v := fun n : ℕ ↦ (ω^ ω^ (1 : Surreal)) ^ n)
+    hv hs (fun n ↦ not_isFinite_wpow_two_sub n)
+  have hwv : ∀ n : ℕ, wlog ((ω^ ω^ (1 : Surreal)) ^ n) =
+      ((n : ℕ) : Surreal) * ω^ (1 : Surreal) := by
+    intro n
+    rw [wlog_pow, wlog_wpow]
+  have hexp : (!{Set.range fun p : ℕ × ℕ ↦
+      wlog ((ω^ ω^ (1 : Surreal)) ^ p.1) + (p.2 : Surreal) *
+        wlog (ω^ (2 : Surreal) - ω^ (1 : Surreal) * (p.1 : Surreal)) | ∅} : Surreal) =
+      ω^ (2 : Surreal) := by
+    conv_rhs => rw [wpow_two_rep]
+    apply ofSets_left_eq_of_cofinal
+    · rintro z ⟨⟨n, k⟩, rfl⟩
+      refine ⟨_, ⟨n + 1, rfl⟩, ?_⟩
+      show wlog ((ω^ ω^ (1 : Surreal)) ^ n) + ((k : ℕ) : Surreal) *
+          wlog (ω^ (2 : Surreal) - ω^ (1 : Surreal) * ((n : ℕ) : Surreal)) ≤
+        ω^ (1 : Surreal) * ((n + 1 : ℕ) : Surreal)
+      rw [hwv n, wlog_wpow_two_sub n]
+      have h2k := natCast_lt_wpow_one (2 * k)
+      have h2k' : ((k : ℕ) : Surreal) * 2 < ω^ (1 : Surreal) := by
+        push_cast at h2k
+        linarith
+      have hgoal : ω^ (1 : Surreal) * ((n + 1 : ℕ) : Surreal) =
+          ((n : ℕ) : Surreal) * ω^ (1 : Surreal) + ω^ (1 : Surreal) := by
+        push_cast; ring
+      rw [hgoal]
+      linarith
+    · rintro z ⟨j, rfl⟩
+      refine ⟨_, ⟨(j, (0 : ℕ)), rfl⟩, ?_⟩
+      show ω^ (1 : Surreal) * ((j : ℕ) : Surreal) ≤
+        wlog ((ω^ ω^ (1 : Surreal)) ^ j) + ((0 : ℕ) : Surreal) *
+          wlog (ω^ (2 : Surreal) - ω^ (1 : Surreal) * ((j : ℕ) : Surreal))
+      rw [hwv j, wlog_wpow_two_sub j]
+      apply le_of_eq
+      push_cast
+      ring
+  exact h.trans (by rw [hexp])
+
 end Surreal
