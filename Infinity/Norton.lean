@@ -514,6 +514,55 @@ theorem lowerSumExp_lt_wpow_add {x : ℕ → Surreal} {n : ℕ}
   rw [hsplit, hB]
   linarith
 
+/-! ### Horn (a): the finite halo of `ω^ω` fits — the cut cannot see the `−1` -/
+
+/-- **Halo blindness**: every finite perturbation of `ω^ω` fits strictly between all
+lower and all upper exponential Darboux sums. The genetic cut for `∫₀^ω eˣ dx` has no
+resolution below the Archimedean class of `e^ω` itself. -/
+theorem fits_norton_add_of_isFinite {c : Surreal} (hc : IsFinite c) :
+    Cut.Fits (ω^ ω^ (1 : Surreal) + c) nortonLo nortonHi := by
+  rw [fits_norton_iff]
+  intro x n hp
+  refine ⟨lowerSumExp_lt_wpow_add hp hc, ?_⟩
+  have h2 := natCast_mul_lt_upperSumExp hp 2
+  obtain ⟨j, hj⟩ := isFinite_iff.1 hc
+  have hcj : c ≤ (j : Surreal) := (le_abs_self c).trans hj
+  have hjV : (j : Surreal) < ω^ ω^ (1 : Surreal) :=
+    (natCast_lt_wpow_one j).trans (wpow_lt_wpow.2 one_lt_wpow_one)
+  push_cast at h2
+  linarith
+
+/-- Norton's value `e^ω = ω^ω` fits the genetic cut. -/
+theorem fits_norton_wpow : Cut.Fits (ω^ ω^ (1 : Surreal)) nortonLo nortonHi := by
+  simpa using fits_norton_add_of_isFinite isFinite_zero
+
+/-- The **true** value `e^ω − 1` also fits the genetic cut. -/
+theorem fits_norton_wpow_sub_one :
+    Cut.Fits (ω^ ω^ (1 : Surreal) - 1) nortonLo nortonHi := by
+  have h := fits_norton_add_of_isFinite isFinite_one.neg
+  rwa [← sub_eq_add_neg] at h
+
+/-- **The indeterminacy horn**: both Norton's value `e^ω = ω^ω` and the correct value
+`e^ω − 1` fit strictly between all lower and all upper exponential Darboux sums over
+`[0, ω]`. Approximation alone cannot decide the genetic exponential integral — the
+choice falls entirely to the simplicity principle. (Compare `darboux_indeterminate`,
+the same phenomenon for `∫₀^ω x dx` at scale `ω`; here the blindness is a full
+Archimedean class at scale `ω^ω`.) -/
+theorem norton_indeterminate :
+    Cut.Fits (ω^ ω^ (1 : Surreal) - 1) nortonLo nortonHi ∧
+      Cut.Fits (ω^ ω^ (1 : Surreal)) nortonLo nortonHi :=
+  ⟨fits_norton_wpow_sub_one, fits_norton_wpow⟩
+
+theorem nortonLo_lt_nortonHi : nortonLo < nortonHi :=
+  fits_norton_wpow.lt
+
+/-- **The genetic exponential integral over `[0, ω]`**: the birthday-simplest surreal
+lying strictly between all lower and all upper exponential Darboux sums — the
+Conway-style simplest-fit principle applied to the exponential over an infinite
+interval, i.e. the genetic value of `∫₀^ω eˣ dx` for this option family. -/
+def nortonIntegralExp : Surreal :=
+  Cut.simplestBtwn nortonLo_lt_nortonHi
+
 end Surreal
 
 end
