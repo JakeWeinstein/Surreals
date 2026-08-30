@@ -40,3 +40,4 @@ import Infinity.Census
 import Infinity.HaloRealization
 import Infinity.GeometricBirthday
 import Infinity.DayOmegaOne
+import Infinity.GeometricUpper
