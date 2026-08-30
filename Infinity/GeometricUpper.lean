@@ -279,7 +279,7 @@ private theorem exists_half_pow_le {q : Dyadic} (hq : 0 < q) :
   rw [div_le_div_iff_of_pos_right hden]
   exact_mod_cast hnum
 
-private theorem leftMoves_wpow_neg_natCast (m : ℕ) :
+theorem leftMoves_wpow_neg_natCast (m : ℕ) :
     (ω^ (-((m : ℕ) : IGame.{u})))ᴸ = {0} := by
   have h : (-((m : ℕ) : IGame.{u}))ᴸ = ∅ := by
     rw [show (-((m : ℕ) : IGame.{u}))ᴸ = ((-((m : ℕ) : IGame.{u}))).moves Player.left from rfl,
@@ -290,7 +290,7 @@ private theorem leftMoves_wpow_neg_natCast (m : ℕ) :
   rw [leftMoves_wpow, h]
   simp
 
-private theorem rightMoves_wpow_neg_natCast_succ (m : ℕ) :
+theorem rightMoves_wpow_neg_natCast_succ (m : ℕ) :
     (ω^ (-(((m + 1) : ℕ) : IGame.{u})))ᴿ =
       (fun q : Dyadic ↦ (q : IGame) * ω^ (-((m : ℕ) : IGame))) '' Set.Ioi 0 := by
   have h : (-(((m + 1) : ℕ) : IGame.{u}))ᴿ = {-((m : ℕ) : IGame)} := by
@@ -302,7 +302,7 @@ private theorem rightMoves_wpow_neg_natCast_succ (m : ℕ) :
     exact Set.neg_singleton _
   rw [rightMoves_wpow, h, Set.image2_singleton_right]
 
-private theorem mk_wpow_neg_natCast (m : ℕ) :
+theorem mk_wpow_neg_natCast (m : ℕ) :
     Surreal.mk (ω^ (-((m : ℕ) : IGame.{u}))) = ω^ (-((m : ℕ) : Surreal)) := by
   rw [Surreal.mk_wpow]
   have h : Surreal.mk (-((m : ℕ) : IGame.{u})) = -((m : ℕ) : Surreal) := by
