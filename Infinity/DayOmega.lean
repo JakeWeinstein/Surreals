@@ -615,6 +615,93 @@ theorem expInf_add_eq_mul_of_eq_one_add {ε δ : Surreal}
   expInf_add_eq_mul_of_birthday_le hε hδ hε0 hδ0
     ((birthday_expInf_mul_le_iff hε hδ hε0 hδ0).2 h)
 
+/-! ### The census as an engine: the geometric halo is empty at day `ω` -/
+
+private theorem wpow_neg_one_eq_eps0 : ω^ (-1 : Surreal) = eps0 := by
+  rw [eps0_def, show (-1 : Surreal) = -(1 : Surreal) from rfl, wpow_neg]
+
+private theorem eps0_infinitesimal : Infinitesimal eps0 := by
+  rw [eps0_def]
+  exact infinitesimal_inv_wpow one_pos
+
+private theorem eps0_pos : (0 : Surreal.{0}) < eps0 := by
+  rw [eps0_def]
+  exact inv_pos.2 (wpow_pos _)
+
+private theorem partialSum_geom_one : partialSum (fun k ↦ eps0 ^ k) 1 = 1 := by
+  rw [partialSum, Finset.sum_range_one, pow_zero]
+
+private theorem partialSum_geom_two : partialSum (fun k ↦ eps0 ^ k) 2 = 1 + eps0 := by
+  rw [partialSum, Finset.sum_range_succ, Finset.sum_range_one, pow_zero, pow_one]
+
+private theorem partialSum_geom_three :
+    partialSum (fun k ↦ eps0 ^ k) 3 = 1 + eps0 + eps0 ^ 2 := by
+  rw [partialSum, Finset.sum_range_succ, Finset.sum_range_succ, Finset.sum_range_one,
+    pow_zero, pow_one]
+
+/-- **Every Hahn sum of the geometric series is born at or after day `ω + 1`**: by the
+census, the only day-`ω` surreals infinitesimally close to `1` are `1` and `1 ± ω⁻¹`,
+and none of them satisfies the domination equations of `Σ ω⁻ᵏ` (each fails at the
+residual of stage `2` or `3`). This strengthens
+`omega0_le_birthday_of_isHahnSum_geometric` and takes the first transfinite step toward
+the halo-minimality conjecture (`hahnSum_geometric_eq_of_halo_minimal`'s hypothesis):
+the halo of `ω/(ω−1)` is provably empty at day `ω`. -/
+theorem omega0_add_one_le_birthday_of_isHahnSum_geometric {w : Surreal}
+    (hw : IsHahnSum (fun k ↦ eps0 ^ k) w) :
+    NatOrdinal.of Ordinal.omega0 + 1 ≤ w.birthday := by
+  have hωle := omega0_le_birthday_of_isHahnSum_geometric hw
+  refine Order.add_one_le_of_lt (hωle.lt_of_ne ?_)
+  intro heq
+  -- `w` is infinitesimally close to `1`
+  have hinf : Infinitesimal (w - 1) := by
+    have h1 := hw 1
+    rw [partialSum_geom_one] at h1
+    simp only [pow_one] at h1
+    exact lt_of_lt_of_le eps0_infinitesimal h1
+  -- census: `w ∈ {1, 1 ± ω⁻¹}`
+  rcases day_omega_near_one hinf heq.ge with h | h | h
+  · -- `1` fails the stage-2 residual
+    have h2 := hw 2
+    rw [partialSum_geom_two, h] at h2
+    have hval : (1 : Surreal) - (1 + eps0) = -eps0 := by ring
+    rw [hval, ArchimedeanClass.mk_neg] at h2
+    have hlt : ArchimedeanClass.mk (eps0 ^ 1) < ArchimedeanClass.mk (eps0 ^ 2) :=
+      mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos 1
+    rw [pow_one] at hlt
+    exact absurd h2 (not_le.2 hlt)
+  · -- `1 + ω⁻¹` fails the stage-3 residual
+    have h3 := hw 3
+    rw [partialSum_geom_three, h, wpow_neg_one_eq_eps0] at h3
+    have hval : 1 + eps0 - (1 + eps0 + eps0 ^ 2) = -(eps0 ^ 2) := by ring
+    rw [hval, ArchimedeanClass.mk_neg] at h3
+    have hlt : ArchimedeanClass.mk (eps0 ^ 2) < ArchimedeanClass.mk (eps0 ^ 3) :=
+      mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos 2
+    exact absurd h3 (not_le.2 hlt)
+  · -- `1 − ω⁻¹` fails the stage-2 residual
+    have h2 := hw 2
+    rw [partialSum_geom_two, h, wpow_neg_one_eq_eps0] at h2
+    have hval : 1 - eps0 - (1 + eps0) = -(((2 : ℕ) : Surreal) * eps0) := by
+      push_cast
+      ring
+    rw [hval, ArchimedeanClass.mk_neg] at h2
+    have hmk : ArchimedeanClass.mk (((2 : ℕ) : Surreal) * eps0) = ArchimedeanClass.mk eps0 := by
+      rw [ArchimedeanClass.mk_mul]
+      have h20 : ArchimedeanClass.mk (((2 : ℕ) : Surreal)) = 0 := by
+        rw [← Real.toSurreal_natCast]
+        exact mk_realCast (by norm_num)
+      rw [h20, zero_add]
+    rw [hmk] at h2
+    have hlt : ArchimedeanClass.mk (eps0 ^ 1) < ArchimedeanClass.mk (eps0 ^ 2) :=
+      mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos 1
+    rw [pow_one] at hlt
+    exact absurd h2 (not_le.2 hlt)
+
+/-- The canonical geometric sum is born at or after day `ω + 1`. -/
+theorem omega0_add_one_le_birthday_hahnSum_geometric :
+    NatOrdinal.of Ordinal.omega0 + 1 ≤ (hahnSum geometric_strict_dominating).birthday :=
+  omega0_add_one_le_birthday_of_isHahnSum_geometric
+    (isHahnSum_hahnSum geometric_strict_dominating)
+
 end Surreal
 
 end
