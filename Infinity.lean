@@ -22,3 +22,6 @@ import Infinity.BirthdayHahn
 import Infinity.TransfiniteSum
 import Infinity.NormalForm
 import Infinity.CNF
+import Infinity.GonshorExp
+import Infinity.GonshorExpTower
+import Infinity.GonshorExpEpsilon
