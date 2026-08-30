@@ -116,7 +116,7 @@ theorem omega_mul_add_nat_le_succ (B m : ℕ) :
   rw [omega_mul_succ]
   exact add_le_add le_rfl (nat_lt_omega' m).le
 
-private theorem one_pos_dyadic : (0 : Dyadic) < 1 := by
+theorem one_pos_dyadic : (0 : Dyadic) < 1 := by
   rw [← Dyadic.coe_lt_coe]
   norm_num
 
