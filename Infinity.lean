@@ -22,3 +22,4 @@ import Infinity.BirthdayHahn
 import Infinity.Identification
 import Infinity.ExpFin
 import Infinity.Laurent
+import Infinity.Darboux
