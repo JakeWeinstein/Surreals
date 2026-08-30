@@ -449,18 +449,90 @@ private theorem length_le_of_evalHahn_eq {x y : SurrealHahnSeries.{u}}
   rw [← h, cnfTerm, (isCNFLength_evalHahn hx).1, leadingTerm_zero] at h1
   exact absurd (SurrealHahnSeries.term_eq_zero.1 h1.symm) hlt.not_ge
 
+/-- Two limit-length series with the same evaluation have the same length. -/
+theorem length_eq_of_evalHahn_eq {x y : SurrealHahnSeries.{u}}
+    (hx : IsSuccLimit x.length) (hy : IsSuccLimit y.length)
+    (h : evalHahn x = evalHahn y) : x.length = y.length :=
+  (length_le_of_evalHahn_eq hy hx h.symm).antisymm (length_le_of_evalHahn_eq hx hy h)
+
 /-- **Term-level injectivity of the evaluation**: two surreal Hahn series of limit length
 with the same evaluation have the same length and the same terms — uniqueness of the
 normal-form data, read off the value by the extraction. -/
 theorem term_congr_of_evalHahn_eq {x y : SurrealHahnSeries.{u}}
     (hx : IsSuccLimit x.length) (hy : IsSuccLimit y.length)
     (h : evalHahn x = evalHahn y) : ∀ β, x.term β = y.term β := by
-  have hlen : x.length = y.length :=
-    (length_le_of_evalHahn_eq hy hx h.symm).antisymm (length_le_of_evalHahn_eq hx hy h)
+  have hlen := length_eq_of_evalHahn_eq hx hy h
   intro β
   rcases lt_or_ge β x.length with hβ | hβ
   · rw [← cnfTerm_evalHahn x (add_one_lt_of_isSuccLimit hx hβ), h,
       cnfTerm_evalHahn y (add_one_lt_of_isSuccLimit hy (hlen ▸ hβ))]
   · rw [SurrealHahnSeries.term_of_le hβ, SurrealHahnSeries.term_of_le (hlen ▸ hβ)]
+
+/-! ### Full injectivity: a series is determined by its evaluation -/
+
+/-- Two monomials with a nonzero coefficient are equal only componentwise: comparing
+Archimedean classes forces the exponents equal, then cancellation forces the
+coefficients. -/
+private theorem monomial_eq_iff {r s : ℝ} {a b : Surreal.{u}} (hr : r ≠ 0)
+    (h : (r : Surreal.{u}) * ω^ a = (s : Surreal.{u}) * ω^ b) : a = b ∧ r = s := by
+  have hs : s ≠ 0 := by
+    rintro rfl
+    apply hr
+    have h0 : (r : Surreal.{u}) * ω^ a = 0 := by
+      rw [h]
+      simp
+    rcases mul_eq_zero.1 h0 with h1 | h1
+    · exact_mod_cast h1
+    · exact absurd h1 (wpow_pos a).ne'
+  have hab : a = b := by
+    have hmk := congrArg ArchimedeanClass.mk h
+    rw [ArchimedeanClass.mk_mul, ArchimedeanClass.mk_mul, mk_realCast hr, mk_realCast hs,
+      zero_add, zero_add] at hmk
+    exact archimedeanClassMk_wpow_strictAnti.injective hmk
+  subst hab
+  refine ⟨rfl, ?_⟩
+  have h2 := mul_right_cancel₀ (wpow_pos a).ne' h
+  exact_mod_cast h2
+
+/-- Series with equal lengths and equal terms have equal coefficients on the support of
+the first. -/
+private theorem coeff_eq_of_term_congr {x y : SurrealHahnSeries.{u}}
+    (hlen : x.length = y.length) (hterm : ∀ β, x.term β = y.term β)
+    {e : Surreal.{u}} (he : e ∈ x.support) : x.coeff e = y.coeff e := by
+  obtain ⟨j, hj⟩ := SurrealHahnSeries.eq_exp_of_mem_support he
+  have hjx : j.1 < x.length := j.2
+  have hjy : j.1 < y.length := hlen ▸ hjx
+  have hcx : x.coeffIdx j.1 ≠ 0 := fun h0 ↦
+    absurd (SurrealHahnSeries.coeffIdx_eq_zero_iff.1 h0) hjx.not_ge
+  have ht := hterm j.1
+  rw [SurrealHahnSeries.term_of_lt hjx, SurrealHahnSeries.term_of_lt hjy] at ht
+  obtain ⟨hexp, hcoeff⟩ := monomial_eq_iff hcx ht
+  have hx1 : x.coeff e = x.coeffIdx j.1 := by
+    rw [← hj]
+    exact x.coeff_exp j
+  have he2 : ((y.exp ⟨j.1, hjy⟩ : y.support) : Surreal) = e := by
+    rw [← hexp]
+    exact hj
+  have hy1 : y.coeff e = y.coeffIdx j.1 := by
+    rw [← he2]
+    exact y.coeff_exp _
+  rw [hx1, hy1]
+  exact hcoeff
+
+/-- **The evaluation is injective on limit-length series**: a surreal Hahn series of limit
+length is determined by its value. Together with `isHahnSumO_evalHahn` and
+`isCNFLength_evalHahn`, this is uniqueness of the Conway-normal-form *representation* for
+every value in the range of the evaluation. -/
+theorem evalHahn_inj {x y : SurrealHahnSeries.{u}} (hx : IsSuccLimit x.length)
+    (hy : IsSuccLimit y.length) (h : evalHahn x = evalHahn y) : x = y := by
+  have hlen := length_eq_of_evalHahn_eq hx hy h
+  have hterm := term_congr_of_evalHahn_eq hx hy h
+  ext e
+  by_cases hex : e ∈ x.support
+  · exact coeff_eq_of_term_congr hlen hterm hex
+  · by_cases hey : e ∈ y.support
+    · exact (coeff_eq_of_term_congr hlen.symm (fun β ↦ (hterm β).symm) hey).symm
+    · rw [SurrealHahnSeries.mem_support_iff, not_ne_iff] at hex hey
+      rw [hex, hey]
 
 end Surreal

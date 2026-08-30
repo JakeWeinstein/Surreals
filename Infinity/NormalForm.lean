@@ -260,6 +260,26 @@ theorem exists_isHahnSumO_omegaPowSeries {α : Ordinal.{u}} {y : Ordinal.{u} →
     ∃ x, IsHahnSumO (fun β ↦ (r β : Surreal.{u}) * ω^ (y β)) α x :=
   exists_isHahnSumO (isStrictDom_omegaPow hy hr)
 
+/-! ### A concrete series of every length: the transfinite geometric series -/
+
+/-- The transfinite geometric series `Σ_{β<α} ω^(−β)` (exponents descending through *all*
+the ordinals below `α`, embedded in the surreals) is strictly dominating below every
+ordinal. -/
+theorem isStrictDom_wpow_neg (α : Ordinal.{u}) :
+    IsStrictDom (fun β ↦ ω^ (-(NatOrdinal.of β).toSurreal)) α := by
+  intro β γ hβγ _
+  exact archimedeanClassMk_wpow_strictAnti
+    (neg_lt_neg (NatOrdinal.toSurreal.lt_iff_lt.2 (by simpa using hβγ)))
+
+/-- **A concrete canonical sum of every ordinal length**: for *every* ordinal `α`, the
+transfinite geometric series `Σ_{β<α} ω^(−β)` has a canonical Hahn sum. At `α = ω` this
+is the flagship geometric series of `Infinity.Series`; beyond it, no instance of any
+length existed before. -/
+theorem isHahnSumO_wpow_neg (α : Ordinal.{u}) :
+    IsHahnSumO (fun β ↦ ω^ (-(NatOrdinal.of β).toSurreal)) α
+      (hahnSumO (fun β ↦ ω^ (-(NatOrdinal.of β).toSurreal)) α) :=
+  isHahnSumO_hahnSumO (isStrictDom_wpow_neg α)
+
 /-! ### Evaluation of the library's surreal Hahn series -/
 
 /-- The term sequence of a `SurrealHahnSeries` is strictly dominating: exponents strictly
