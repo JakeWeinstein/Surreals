@@ -128,13 +128,34 @@ function on No — those remain the genuine long-term target (route A). No claim
 
 ## 5. Follow-ups this unlocks (in value order)
 
-1. Iterate the step: `exp (ω·2) = ω^{ω·2}` from seeds `exp(ω+n) = ω^ω·e^n`
-   (needs `ω·2 = !{ω+n | ∅}`, an `IGame.add` computation) — evidence the step theorem
-   composes along Gonshor's induction. Similarly `exp ε₀ = ω^{ω^{ε₀+1}}` — the first
-   `g ≠ id` value — if a workable `ε₀` representation is built (ordinal bridge needed).
+1. ~~Iterate the step~~ — **DONE, further than planned** (see §6): `exp(ω·m)` for every
+   `m`, `exp(ω²)`, and `exp ε₀ = ω^{ω^{ε₀+1}}` (no ordinal bridge was needed — `ε₀` as
+   the cut of the finite ω-towers, with the fixed-point law `ω^{ε₀} = ε₀` proved by
+   cofinality, not ordinal arithmetic).
 2. The dual (`log` at limit cuts) via Gonshor's `log(ω^b)` formula — same machinery.
 3. Combining with the finite-argument agent's `exp`: a piecewise-total `exp` on
    {finite} ∪ {g=id purely infinite monomial sums}, with the functional equation where
    both sides are defined — the assembly milestone.
-4. Route A proper: the genetic recursion as a `Surreal`-valued function with a
+4. Generalize `gonshorCut_eq_wpow` from index `ℕ × ℕ` to `ι × ℕ` for any small `ι`
+   (the proof never uses the ℕ-structure of the first index) — this plus the
+   ordinal-sums agent's `hahnSumO`/`IsStrictDom` interface is the on-ramp to `exp` on
+   purely infinite numbers with ordinal-length normal forms.
+5. Route A proper: the genetic recursion as a `Surreal`-valued function with a
    simultaneous-induction well-definedness proof — the multi-session mountain.
+
+## 6. Outcome (written after the session, all kernel-checked, build green)
+
+Files `Infinity/GonshorExp.lean`, `GonshorExpTower.lean`, `GonshorExpEpsilon.lean`:
+
+* Bridges: `ofSets_left_eq_of_cofinal`, `surreal_ofSets_left_rep`, `wpow_ofSets`,
+  `ofSets_left_add` (Conway's sum formula for left-cuts).
+* `expPartial` calculus: positivity, `mk_expPartial` (dominant term), odd negativity
+  (`expPartial_odd_neg` — kills Gonshor's right options at limit arguments).
+* **`gonshorCut_eq_wpow`** — the limit-step evaluation theorem, exactly as in §3.
+* Representations: `ω = !{ℕ|∅}`, `ω·(m+1) = !{ω·m+n|∅}`, `2 = !{1|∅}`,
+  `ω² = !{ω·n|∅}`, `ε₀+1 = !{ε₀|∅}`.
+* Values of Gonshor's exp (each = the genetic cut with verified seed values):
+  **`exp ω = ω^ω`**, **`exp(ω·(m+1)) = (ω^ω)^(m+1)`** for every `m`,
+  **`exp ω² = ω^{ω²}`**, **`exp ε₀ = ω^{ω^{ε₀+1}} ≠ ε₀`**.
+* Bonus: **`ω^{ε₀} = ε₀`** (`wpow_epsilon0`) — the first machine-checked fixed point
+  of the surreal ω-map, obtained with no ordinal machinery at all.
