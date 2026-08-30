@@ -45,3 +45,4 @@ import Infinity.InverseBirthday
 import Infinity.ScaleRealization
 import Infinity.TubeCensus
 import Infinity.GeometricClose
+import Infinity.MonomialCensus

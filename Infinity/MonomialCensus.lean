@@ -521,6 +521,404 @@ theorem mono_anchor_pack (hc : ∀ k, c k ≠ 0) : ∀ B : ℕ, ∃ (X : IGame.{
         exact h
     exact ⟨X', hX'n, hmkX', ⟨hL', hR'⟩, hb1', hRgrid'⟩
 
+/-- The public grid bound along any monomial series. -/
+theorem birthday_monoS_add_dyadic_mul_le (hc : ∀ k, c k ≠ 0) (B : ℕ) {t : Dyadic}
+    (ht : t ≠ 0) :
+    (monoS c (B + 1) + (t : Surreal) * ε₀ ^ (B + 1)).birthday
+      ≤ Ω * (((B + 1) : ℕ) : NatOrdinal) + ((Dyadic.hgt t - 1 : ℕ) : NatOrdinal) := by
+  obtain ⟨X, hXn, -, -, -, hRgrid⟩ := mono_anchor_pack hc B
+  exact hRgrid t ht
+
+/-- Every monomial partial sum is born strictly inside its block. -/
+theorem birthday_monoS_add_one_le (hc : ∀ k, c k ≠ 0) (B : ℕ) :
+    (monoS c (B + 1)).birthday + 1 ≤ Ω * (((B + 1) : ℕ) : NatOrdinal) := by
+  obtain ⟨X, hXn, -, -, hb1, -⟩ := mono_anchor_pack hc B
+  exact hb1
+
+/-! ### The census core along a monomial series -/
+
+/-- **The critical-day step of the monomial tube census**: as in
+`Infinity.TubeCensus.tube_census_core`, with an arbitrary Hahn sum `w` of the series
+as the tube center and the series' own partial sums as anchors. -/
+private theorem mono_census_core (hc : ∀ k, c k ≠ 0) {w : Surreal.{0}}
+    (hw : IsHahnSum (monoTerm c) w) (B N : ℕ) {u : Surreal.{0}}
+    (hu : ArchimedeanClass.mk (ε₀ ^ (B + 1)) < ArchimedeanClass.mk (u - w))
+    (hbeq : u.birthday = Ω * (((B + 2) : ℕ) : NatOrdinal) + (N : NatOrdinal))
+    (horacle : ∀ v : Surreal.{0},
+      v.birthday < Ω * (((B + 2) : ℕ) : NatOrdinal) + (N : NatOrdinal) →
+      ArchimedeanClass.mk (ε₀ ^ (B + 1)) < ArchimedeanClass.mk (v - w) →
+      ∃ s : Dyadic, v = monoS c (B + 2) + (s : Surreal) * ε₀ ^ (B + 2) ∧
+        Dyadic.hgt s ≤ N) :
+    ∃ t : Dyadic, u = monoS c (B + 2) + (t : Surreal) * ε₀ ^ (B + 2) ∧
+      Dyadic.hgt t ≤ N + 1 := by
+  classical
+  obtain ⟨g, hgn, hgy, hgb⟩ := birthday_eq_iGameBirthday u
+  haveI := hgn
+  have hslt := Cut.supLeft_lt_infRight_of_numeric g
+  have hopt : ∀ (p : Player) (i : IGame), i ∈ g.moves p → ∀ (hn : i.Numeric),
+      (@Surreal.mk i hn).birthday
+        < Ω * (((B + 2) : ℕ) : NatOrdinal) + (N : NatOrdinal) := by
+    intro p i hi hn
+    have h1 := IGame.birthday_lt_of_mem_moves hi
+    rw [hgb, hbeq] at h1
+    exact lt_of_le_of_lt (birthday_mk_le i) h1
+  set S : Set Dyadic := {s | Dyadic.hgt s ≤ N ∧ ∃ i ∈ gᴸ, ∃ _ : i.Numeric,
+    Surreal.mk i = monoS c (B + 2) + (s : Surreal) * ε₀ ^ (B + 2)} with hS
+  set S' : Set Dyadic := {s | Dyadic.hgt s ≤ N ∧ ∃ j ∈ gᴿ, ∃ _ : j.Numeric,
+    Surreal.mk j = monoS c (B + 2) + (s : Surreal) * ε₀ ^ (B + 2)} with hS'
+  have hSfin : S.Finite := (Dyadic.finite_setOf_hgt_le N).subset (fun s hs ↦ hs.1)
+  have hS'fin : S'.Finite := (Dyadic.finite_setOf_hgt_le N).subset (fun s hs ↦ hs.1)
+  have hSS' : ∀ s ∈ S, ∀ s' ∈ S', s < s' := by
+    rintro s ⟨_, i, hi, hin, hiv⟩ s' ⟨_, j, hj, hjn, hjv⟩
+    haveI := hin
+    haveI := hjn
+    have h1 : Surreal.mk i < u := by
+      rw [← hgy]
+      exact mk_lt_mk.2 (IGame.Numeric.left_lt hi)
+    have h2 : u < Surreal.mk j := by
+      rw [← hgy]
+      exact mk_lt_mk.2 (IGame.Numeric.lt_right hj)
+    refine dyadic_lt_of_mul_eps_lt (m := B + 2) ?_
+    rw [hiv] at h1
+    rw [hjv] at h2
+    linarith
+  obtain ⟨t, htgt, htS, htS'⟩ : ∃ t : Dyadic, Dyadic.hgt t ≤ N + 1 ∧
+      (∀ s ∈ S, s < t) ∧ (∀ s' ∈ S', t < s') := by
+    rcases S.eq_empty_or_nonempty with hSe | hSne
+    · rcases S'.eq_empty_or_nonempty with hS'e | hS'ne
+      · refine ⟨0, by simp, ?_, ?_⟩
+        · intro s hs
+          rw [hSe] at hs
+          exact absurd hs (Set.notMem_empty s)
+        · intro s hs
+          rw [hS'e] at hs
+          exact absurd hs (Set.notMem_empty s)
+      · have hne : hS'fin.toFinset.Nonempty := by
+          rwa [Set.Finite.toFinset_nonempty]
+        set m := hS'fin.toFinset.min' hne with hm
+        have hmS' : m ∈ S' := by
+          rw [← Set.Finite.mem_toFinset hS'fin]
+          exact hS'fin.toFinset.min'_mem hne
+        obtain ⟨t, ht1, ht2⟩ := Dyadic.exists_hgt_below m
+        refine ⟨t, by have := hmS'.1; omega, ?_, ?_⟩
+        · intro s hs
+          rw [hSe] at hs
+          exact absurd hs (Set.notMem_empty s)
+        · intro s' hs'
+          refine ht1.trans_le ?_
+          rw [hm]
+          exact hS'fin.toFinset.min'_le s' ((Set.Finite.mem_toFinset hS'fin).2 hs')
+    · rcases S'.eq_empty_or_nonempty with hS'e | hS'ne
+      · have hne : hSfin.toFinset.Nonempty := by
+          rwa [Set.Finite.toFinset_nonempty]
+        set m := hSfin.toFinset.max' hne with hm
+        have hmS : m ∈ S := by
+          rw [← Set.Finite.mem_toFinset hSfin]
+          exact hSfin.toFinset.max'_mem hne
+        obtain ⟨t, ht1, ht2⟩ := Dyadic.exists_hgt_above m
+        refine ⟨t, by have := hmS.1; omega, ?_, ?_⟩
+        · intro s hs
+          refine lt_of_le_of_lt ?_ ht1
+          rw [hm]
+          exact hSfin.toFinset.le_max' s ((Set.Finite.mem_toFinset hSfin).2 hs)
+        · intro s' hs'
+          rw [hS'e] at hs'
+          exact absurd hs' (Set.notMem_empty s')
+      · have hneS : hSfin.toFinset.Nonempty := by rwa [Set.Finite.toFinset_nonempty]
+        have hneS' : hS'fin.toFinset.Nonempty := by rwa [Set.Finite.toFinset_nonempty]
+        set mS := hSfin.toFinset.max' hneS with hmS
+        set mS' := hS'fin.toFinset.min' hneS' with hmS'
+        have hmSm : mS ∈ S := by
+          rw [← Set.Finite.mem_toFinset hSfin]
+          exact hSfin.toFinset.max'_mem hneS
+        have hmS'm : mS' ∈ S' := by
+          rw [← Set.Finite.mem_toFinset hS'fin]
+          exact hS'fin.toFinset.min'_mem hneS'
+        have hlt : mS < mS' := hSS' mS hmSm mS' hmS'm
+        obtain ⟨t, ht1, ht2, ht3⟩ := Dyadic.exists_hgt_btwn mS mS' hlt
+        refine ⟨t, ?_, ?_, ?_⟩
+        · have h1 := hmSm.1
+          have h2 := hmS'm.1
+          omega
+        · intro s hs
+          refine lt_of_le_of_lt ?_ ht1
+          rw [hmS]
+          exact hSfin.toFinset.le_max' s ((Set.Finite.mem_toFinset hSfin).2 hs)
+        · intro s' hs'
+          refine ht2.trans_le ?_
+          rw [hmS']
+          exact hS'fin.toFinset.min'_le s' ((Set.Finite.mem_toFinset hS'fin).2 hs')
+  set cnd : Surreal.{0} := monoS c (B + 2) + (t : Surreal) * ε₀ ^ (B + 2) with hcnd
+  have hcb : cnd.birthday ≤ Ω * (((B + 2) : ℕ) : NatOrdinal) + (N : NatOrdinal) := by
+    rcases eq_or_ne t 0 with rfl | ht0
+    · rw [hcnd, dyadic_cast_zero, zero_mul, add_zero]
+      have h := birthday_monoS_add_one_le hc (B + 1)
+      refine le_trans (le_trans (le_add_of_nonneg_right zero_le_one) h) ?_
+      exact le_add_of_nonneg_right bot_le
+    · rw [hcnd]
+      refine (birthday_monoS_add_dyadic_mul_le hc (B + 1) ht0).trans ?_
+      refine add_le_add le_rfl (nat_cast_mono ?_)
+      omega
+  have hcv : ArchimedeanClass.mk (ε₀ ^ (B + 1)) < ArchimedeanClass.mk (cnd - w) := by
+    by_cases ht1 : t = c (B + 2)
+    · have hcs : cnd - w = monoS c (B + 3) - w := by
+        rw [hcnd, ht1, ← monoS_succ (B + 2)]
+      rw [hcs, mk_monoS_sub hc hw]
+      exact (mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos (B + 1)).trans
+        (mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos (B + 2))
+    · rw [hcnd, mk_mono_grid_sub hc hw (B + 1) ht1]
+      exact mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos (B + 1)
+  have hfitc : Cut.Fits cnd (Cut.supLeft g) (Cut.infRight g) := by
+    rw [Cut.Fits, Set.mem_inter_iff]
+    constructor
+    · rw [Cut.right_supLeft]
+      simp only [Set.mem_iInter, Set.mem_ofPred_eq]
+      intro i hi
+      haveI : i.Numeric := IGame.Numeric.of_mem_moves hi
+      have hiy : Surreal.mk i < u := by
+        rw [← hgy]
+        exact mk_lt_mk.2 (IGame.Numeric.left_lt hi)
+      have hib := hopt _ i hi inferInstance
+      have hlt : Surreal.mk i < cnd := by
+        by_cases hitube : ArchimedeanClass.mk (ε₀ ^ (B + 1))
+            < ArchimedeanClass.mk (Surreal.mk i - w)
+        · obtain ⟨s, hsv, hshgt⟩ := horacle (Surreal.mk i) hib hitube
+          have hst : s < t := htS s ⟨hshgt, i, hi, inferInstance, hsv⟩
+          rw [hsv, hcnd]
+          have := mul_lt_mul_of_pos_right (dyadic_cast_lt hst) (eps0_pow_pos (B + 2))
+          linarith
+        · rw [not_lt] at hitube
+          have hmk_iu : ArchimedeanClass.mk (Surreal.mk i - u)
+              = ArchimedeanClass.mk (Surreal.mk i - w) := by
+            rw [show Surreal.mk i - u = (Surreal.mk i - w) + (w - u) from by ring,
+              ArchimedeanClass.mk_add_eq_mk_left ?_]
+            rw [show w - u = -(u - w) from by ring, ArchimedeanClass.mk_neg]
+            exact lt_of_le_of_lt hitube hu
+          have hmk_cu : ArchimedeanClass.mk (Surreal.mk i - u)
+              < ArchimedeanClass.mk (cnd - u) := by
+            rw [hmk_iu]
+            refine lt_of_le_of_lt hitube ?_
+            have hmin2 : ArchimedeanClass.mk (ε₀ ^ (B + 1))
+                < min (ArchimedeanClass.mk (cnd - w)) (ArchimedeanClass.mk (w - u)) := by
+              refine lt_min hcv ?_
+              rw [show w - u = -(u - w) from by ring, ArchimedeanClass.mk_neg]
+              exact hu
+            refine lt_of_lt_of_le hmin2 ?_
+            rw [show cnd - u = (cnd - w) + (w - u) from by ring]
+            exact ArchimedeanClass.min_le_mk_add ..
+          exact lt_of_lt_of_mk_sub_lt hiy hmk_cu
+      rw [← toGame_mk, toGame_le_iff]
+      exact not_le.2 hlt
+    · rw [Cut.left_infRight]
+      simp only [Set.mem_iInter, Set.mem_ofPred_eq]
+      intro j hj
+      haveI : j.Numeric := IGame.Numeric.of_mem_moves hj
+      have hyj : u < Surreal.mk j := by
+        rw [← hgy]
+        exact mk_lt_mk.2 (IGame.Numeric.lt_right hj)
+      have hjb := hopt _ j hj inferInstance
+      have hlt : cnd < Surreal.mk j := by
+        by_cases hjtube : ArchimedeanClass.mk (ε₀ ^ (B + 1))
+            < ArchimedeanClass.mk (Surreal.mk j - w)
+        · obtain ⟨s, hsv, hshgt⟩ := horacle (Surreal.mk j) hjb hjtube
+          have hst : t < s := htS' s ⟨hshgt, j, hj, inferInstance, hsv⟩
+          rw [hsv, hcnd]
+          have := mul_lt_mul_of_pos_right (dyadic_cast_lt hst) (eps0_pow_pos (B + 2))
+          linarith
+        · rw [not_lt] at hjtube
+          have hmk_ju : ArchimedeanClass.mk (Surreal.mk j - u)
+              = ArchimedeanClass.mk (Surreal.mk j - w) := by
+            rw [show Surreal.mk j - u = (Surreal.mk j - w) + (w - u) from by ring,
+              ArchimedeanClass.mk_add_eq_mk_left ?_]
+            rw [show w - u = -(u - w) from by ring, ArchimedeanClass.mk_neg]
+            exact lt_of_le_of_lt hjtube hu
+          have hmk_cu : ArchimedeanClass.mk (Surreal.mk j - u)
+              < ArchimedeanClass.mk (cnd - u) := by
+            rw [hmk_ju]
+            refine lt_of_le_of_lt hjtube ?_
+            have hmin2 : ArchimedeanClass.mk (ε₀ ^ (B + 1))
+                < min (ArchimedeanClass.mk (cnd - w)) (ArchimedeanClass.mk (w - u)) := by
+              refine lt_min hcv ?_
+              rw [show w - u = -(u - w) from by ring, ArchimedeanClass.mk_neg]
+              exact hu
+            refine lt_of_lt_of_le hmin2 ?_
+            rw [show cnd - u = (cnd - w) + (w - u) from by ring]
+            exact ArchimedeanClass.min_le_mk_add ..
+          exact lt_of_lt_of_mk_sub_lt' hyj hmk_cu
+      rw [← toGame_mk, toGame_le_iff]
+      exact not_le.2 hlt
+  have hy' : Cut.simplestBtwn hslt = u := by
+    rw [← toGame_inj, Cut.simplestBtwn_supLeft_infRight hslt, ← hgy, toGame_mk]
+  have hfity : Cut.Fits u (Cut.supLeft g) (Cut.infRight g) :=
+    hy' ▸ Cut.fits_simplestBtwn hslt
+  have hmin : ∀ v, Cut.Fits v (Cut.supLeft g) (Cut.infRight g) →
+      u.birthday ≤ v.birthday := by
+    intro v hv
+    have h := Cut.birthday_simplestBtwn_le_of_fits hv
+    rwa [hy'] at h
+  have hyc : u = cnd :=
+    (Cut.eq_of_fits_of_birthday_le hfity hfitc hmin (hcb.trans_eq hbeq.symm)).symm
+  exact ⟨t, by rw [hyc, hcnd], htgt⟩
+
+/-! ### The monomial tube census -/
+
+theorem monoS_one : monoS c 1 = ((c 0 : Dyadic) : Surreal) := by
+  rw [monoS_succ 0, monoS_zero, zero_add, pow_zero, mul_one]
+
+/-- **The monomial tube census**: around any Hahn sum `w` of a strictly dominating
+dyadic-coefficient monomial series, a surreal born by day `ω·(B+1) + n` at distance of
+class strictly finer than `mk (ω^{−B})` from `w` is a dyadic grid point
+`T_{B+1} + t·ω^{−(B+1)}` over the series' own partial sums, with `hgt t ≤ n + 1`. -/
+theorem mono_census (hc : ∀ k, c k ≠ 0) {w : Surreal.{0}}
+    (hw : IsHahnSum (monoTerm c) w) : ∀ (B : ℕ) (n : ℕ) {u : Surreal.{0}},
+    ArchimedeanClass.mk (ε₀ ^ B) < ArchimedeanClass.mk (u - w) →
+    u.birthday ≤ Ω * (((B + 1) : ℕ) : NatOrdinal) + (n : NatOrdinal) →
+    ∃ t : Dyadic, u = monoS c (B + 1) + (t : Surreal) * ε₀ ^ (B + 1) ∧
+      Dyadic.hgt t ≤ n + 1 := by
+  intro B
+  induction B with
+  | zero =>
+    intro n u hu hb
+    have hu0 : (0 : ArchimedeanClass Surreal.{0}) < ArchimedeanClass.mk (u - w) := by
+      rw [pow_zero, mk_one_surreal] at hu
+      exact hu
+    have hinf : Infinitesimal (u - w) := infinitesimal_def.2 hu0
+    have hw1 : Infinitesimal (w - monoS c 1) := by
+      refine infinitesimal_def.2 ?_
+      rw [mk_sub_monoS hc hw 1, pow_one]
+      exact infinitesimal_def.1 eps0_infinitesimal
+    have hcast : ((c 0 : Dyadic) : Surreal.{0}) = (((c 0 : ℚ) : ℝ) : Surreal) := by
+      rw [← Real.toSurreal_ratCast]
+    have h2 : u = ((c 0 : Dyadic) : Surreal.{0}) + ((w - monoS c 1) + (u - w)) := by
+      rw [← monoS_one]
+      ring
+    have hsum : Infinitesimal ((w - monoS c 1) + (u - w)) := hw1.add hinf
+    have hufin : IsFinite u := by
+      rw [h2]
+      exact (isFinite_dyadic_cast _).add hsum.isFinite
+    have hst : stdPart u = ((c 0 : ℚ) : ℝ) := by
+      rw [h2, stdPart_add_eq_left hsum, hcast, stdPart_realCast]
+    have hb' : u.birthday ≤ Ω + (n : NatOrdinal) := by
+      have h1 : Ω * (((0 + 1) : ℕ) : NatOrdinal) = Ω := by norm_num
+      rwa [h1] at hb
+    obtain ⟨r, hval, hh1, -⟩ := eq_grid_of_isFinite_of_birthday_le n hufin hb'
+    rw [hst] at hval
+    refine ⟨r, ?_, hh1⟩
+    rw [monoS_one, hcast, pow_one, ← wpow_neg_one_eq_eps0]
+    exact hval
+  | succ B ihB =>
+    have hlow : ∀ v : Surreal.{0}, v.birthday < Ω * (((B + 2) : ℕ) : NatOrdinal) →
+        ArchimedeanClass.mk (ε₀ ^ (B + 1)) < ArchimedeanClass.mk (v - w) →
+        v = monoS c (B + 2) := by
+      intro v hvb hvt
+      obtain ⟨m, hm⟩ := lt_omega_mul_succ_decomp (B + 1) hvb
+      have hvt' : ArchimedeanClass.mk (ε₀ ^ B) < ArchimedeanClass.mk (v - w) :=
+        (mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos B).trans hvt
+      obtain ⟨s, hsv, -⟩ := ihB m hvt' hm
+      by_cases hs1 : s = c (B + 1)
+      · rw [hsv, hs1, ← monoS_succ (B + 1)]
+      · exfalso
+        have hmk := mk_mono_grid_sub hc hw B hs1
+        rw [← hsv] at hmk
+        rw [hmk] at hvt
+        exact lt_irrefl _ hvt
+    intro n
+    induction n with
+    | zero =>
+      intro u hu hb
+      have hb0 : u.birthday ≤ Ω * (((B + 2) : ℕ) : NatOrdinal) := by
+        rwa [show ((0 : ℕ) : NatOrdinal) = 0 from by exact_mod_cast rfl, add_zero] at hb
+      rcases lt_or_eq_of_le hb0 with hlt | heq
+      · refine ⟨0, ?_, by simp⟩
+        rw [hlow u hlt hu, dyadic_cast_zero, zero_mul, add_zero]
+      · refine mono_census_core hc hw B 0 hu ?_ ?_
+        · rw [heq]
+          rw [show ((0 : ℕ) : NatOrdinal) = 0 from by exact_mod_cast rfl, add_zero]
+        · intro v hvb hvt
+          have hvb' : v.birthday < Ω * (((B + 2) : ℕ) : NatOrdinal) := by
+            rwa [show ((0 : ℕ) : NatOrdinal) = 0 from by exact_mod_cast rfl,
+              add_zero] at hvb
+          refine ⟨0, ?_, by simp⟩
+          rw [hlow v hvb' hvt, dyadic_cast_zero, zero_mul, add_zero]
+    | succ n ihn =>
+      intro u hu hb
+      rcases lt_or_eq_of_le hb with hlt | heq
+      · have hb' : u.birthday ≤ Ω * (((B + 2) : ℕ) : NatOrdinal) + (n : NatOrdinal) := by
+          rw [← base_add_nat_succ] at hlt
+          exact Order.lt_add_one_iff.1 hlt
+        obtain ⟨t, hval, hh⟩ := ihn hu hb'
+        exact ⟨t, hval, by omega⟩
+      · refine mono_census_core hc hw B (n + 1) hu heq ?_
+        intro v hvb hvt
+        have hvb' : v.birthday ≤ Ω * (((B + 2) : ℕ) : NatOrdinal) + (n : NatOrdinal) := by
+          rw [← base_add_nat_succ] at hvb
+          exact Order.lt_add_one_iff.1 hvb
+        exact ihn hvt hvb'
+
+/-- **The monomial tube theorem**: the only surreal born before day `ω·(B+2)` at
+distance strictly finer than class `ω^{−(B+1)}` from a Hahn sum of the series is the
+partial sum `T_{B+2}`. -/
+theorem mono_eq_monoS_of_birthday_lt_of_mk_lt (hc : ∀ k, c k ≠ 0) {w : Surreal.{0}}
+    (hw : IsHahnSum (monoTerm c) w) (B : ℕ) {u : Surreal.{0}}
+    (hu : ArchimedeanClass.mk (ε₀ ^ (B + 1)) < ArchimedeanClass.mk (u - w))
+    (hb : u.birthday < Ω * (((B + 2) : ℕ) : NatOrdinal)) : u = monoS c (B + 2) := by
+  obtain ⟨m, hm⟩ := lt_omega_mul_succ_decomp (B + 1) hb
+  have hu' : ArchimedeanClass.mk (ε₀ ^ B) < ArchimedeanClass.mk (u - w) :=
+    (mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos B).trans hu
+  obtain ⟨s, hsv, -⟩ := mono_census hc hw B m hu' hm
+  by_cases hs1 : s = c (B + 1)
+  · rw [hsv, hs1, ← monoS_succ (B + 1)]
+  · exfalso
+    have hmk := mk_mono_grid_sub hc hw B hs1
+    rw [← hsv] at hmk
+    rw [hmk] at hu
+    exact lt_irrefl _ hu
+
+/-! ### The `ω²`-hardness theorem -/
+
+/-- **The `ω²`-hardness of monomial summation**: every Hahn sum of every strictly
+dominating `ω`-power series with nonzero dyadic coefficients is born at or after day
+`ω·ω`. Transfinite summation of monomial series is uniformly expensive: no choice of
+coefficients admits a sum — canonical or otherwise — below day `ω²`. -/
+theorem mono_omega_sq_le_birthday_of_isHahnSum (hc : ∀ k, c k ≠ 0) {w : Surreal.{0}}
+    (hw : IsHahnSum (monoTerm c) w) :
+    Ω * Ω ≤ w.birthday := by
+  by_contra hcon
+  rw [not_le] at hcon
+  obtain ⟨a', ha', b', hb', hle⟩ := NatOrdinal.lt_mul_iff.1 hcon
+  obtain ⟨p, rfl⟩ := NatOrdinal.lt_omega0.1 ha'
+  obtain ⟨q, rfl⟩ := NatOrdinal.lt_omega0.1 hb'
+  have h1 : w.birthday ≤ Ω * (((p + q) : ℕ) : NatOrdinal) := by
+    have h2 : w.birthday ≤ (p : NatOrdinal) * Ω + Ω * (q : NatOrdinal) :=
+      le_trans (le_add_of_nonneg_right bot_le) hle
+    refine h2.trans (le_of_eq ?_)
+    push_cast
+    ring
+  have h0 : (0 : NatOrdinal) < Ω := by
+    have h := nat_lt_omega' 0
+    rwa [Nat.cast_zero] at h
+  have h3 : w.birthday < Ω * ((((p + q) + 2) : ℕ) : NatOrdinal) := by
+    refine h1.trans_lt (mul_lt_mul_of_pos_left ?_ h0)
+    exact_mod_cast (by omega : p + q < p + q + 2)
+  have heq := mono_eq_monoS_of_birthday_lt_of_mk_lt hc hw (p + q)
+    (mk_pow_lt_mk_sub_of_isHahnSum_mono hc hw hw (p + q + 1)) h3
+  have hres := mk_sub_monoS hc hw (p + q + 3)
+  rw [heq] at hres
+  have hval : monoS c (p + q + 2) - monoS c (p + q + 3)
+      = -((c (p + q + 2) : Surreal) * ε₀ ^ (p + q + 2)) := by
+    rw [monoS_succ (p + q + 2)]
+    ring
+  rw [hval, ArchimedeanClass.mk_neg, ArchimedeanClass.mk_mul,
+    mk_dyadic_cast_ne_zero (hc _), zero_add] at hres
+  exact absurd hres (ne_of_lt (mk_pow_lt_mk_pow_succ eps0_infinitesimal eps0_pos _))
+
+/-- The canonical sum of every dyadic-coefficient monomial series is born at or after
+day `ω·ω`. -/
+theorem mono_omega_sq_le_birthday_hahnSum (hc : ∀ k, c k ≠ 0) :
+    Ω * Ω ≤ (hahnSum (monoTerm_strict_dominating hc)).birthday :=
+  mono_omega_sq_le_birthday_of_isHahnSum hc
+    (isHahnSum_hahnSum (monoTerm_strict_dominating hc))
+
 end Surreal
 
 end
