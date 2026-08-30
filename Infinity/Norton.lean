@@ -273,6 +273,247 @@ theorem exists_split {x : ℕ → Surreal} {n : ℕ}
     · exact absurd h hnot
     · exact ⟨h, hnot⟩
 
+/-! ### Upper sums exceed every natural multiple of `ω^ω` -/
+
+/-- **Upper sums are class-wide overshoots**: every upper exponential Darboux sum over
+the lattice exceeds `k·ω^ω` for every natural `k`. Any lattice partition must jump the
+middle galaxies in a single piece — from its last finite point to a point `ω + finite` —
+and that piece contributes (top-galaxy value `≈ ω^ω`) × (infinite length). -/
+theorem natCast_mul_lt_upperSumExp {x : ℕ → Surreal} {n : ℕ}
+    (hp : IsExpPartitionOn x n 0 (ω^ (1 : Surreal))) (k : ℕ) :
+    (k : Surreal) * ω^ ω^ (1 : Surreal) < upperSumExp x n := by
+  obtain ⟨m, hmn, hfin, htop⟩ := exists_split hp
+  obtain ⟨hD, hnotfin⟩ := htop (m + 1) (by omega) (by omega)
+  -- the gap piece has positive infinite length
+  have hlen_nonneg : 0 ≤ x (m + 1) - x m := sub_nonneg.2 (hp.1.2.2 m hmn)
+  have hlen_inf : ¬ IsFinite (x (m + 1) - x m) := by
+    intro hfin'
+    have h1 : IsFinite (x (m + 1)) := by
+      have h := hfin'.add (hfin m le_rfl)
+      simpa using h
+    exact hnotfin h1
+  -- a rational below the (positive) standard part of the tag factor, and a big natural
+  obtain ⟨q, hq0, hq⟩ := exists_rat_btwn (Real.exp_pos (stdPart (x (m + 1) - ω^ (1 : Surreal))))
+  have hqR : (0 : ℝ) < (q : ℝ) := hq0
+  obtain ⟨N, hN⟩ := exists_nat_gt ((k : ℝ) / (q : ℝ))
+  have hkqN : (k : ℝ) < (q : ℝ) * N := by
+    rw [div_lt_iff₀ hqR] at hN
+    linarith
+  -- k < (cast q) · N in the surreals
+  have h1 : (k : Surreal) < ((q : ℝ) : Surreal) * (N : Surreal) := by
+    have hcast : ((k : ℝ) : Surreal) < (((q : ℝ) * N : ℝ) : Surreal) :=
+      Real.toSurreal_lt_iff.2 hkqN
+    rwa [Real.toSurreal_mul, Real.toSurreal_natCast, Real.toSurreal_natCast] at hcast
+  -- cast q < expFin (x (m+1) − ω)
+  have h2 : ((q : ℝ) : Surreal) < expFin (x (m + 1) - ω^ (1 : Surreal)) := by
+    refine lt_of_stdPart_lt (isFinite_realCast _) (isFinite_expFin hD) ?_
+    rw [stdPart_realCast, stdPart_expFin hD]
+    exact hq
+  -- N < the gap length
+  have h3 : (N : Surreal) < x (m + 1) - x m :=
+    natCast_lt_of_nonneg_of_not_isFinite hlen_nonneg hlen_inf N
+  -- k < expFin (x (m+1) − ω) · (gap length)
+  have h4 : (k : Surreal) < expFin (x (m + 1) - ω^ (1 : Surreal)) * (x (m + 1) - x m) := by
+    have ha : ((q : ℝ) : Surreal) * (N : Surreal) ≤
+        expFin (x (m + 1) - ω^ (1 : Surreal)) * (N : Surreal) :=
+      mul_le_mul_of_nonneg_right h2.le (Nat.cast_nonneg N)
+    have hb : expFin (x (m + 1) - ω^ (1 : Surreal)) * (N : Surreal) <
+        expFin (x (m + 1) - ω^ (1 : Surreal)) * (x (m + 1) - x m) :=
+      mul_lt_mul_of_pos_left h3 (expFin_pos' _)
+    linarith
+  -- multiply through by ω^ω and pass to the gap term of the upper sum
+  have h5 : (k : Surreal) * ω^ ω^ (1 : Surreal) <
+      nortonExp (x (m + 1)) * (x (m + 1) - x m) := by
+    rw [nortonExp_of_not_isFinite hnotfin]
+    calc (k : Surreal) * ω^ ω^ (1 : Surreal)
+        < (expFin (x (m + 1) - ω^ (1 : Surreal)) * (x (m + 1) - x m)) *
+            ω^ ω^ (1 : Surreal) := mul_lt_mul_of_pos_right h4 (wpow_pos _)
+      _ = ω^ ω^ (1 : Surreal) * expFin (x (m + 1) - ω^ (1 : Surreal)) *
+            (x (m + 1) - x m) := by ring
+  have h6 : nortonExp (x (m + 1)) * (x (m + 1) - x m) ≤ upperSumExp x n := by
+    refine Finset.single_le_sum (f := fun i ↦ nortonExp (x (i + 1)) * (x (i + 1) - x i))
+      (fun i hi ↦ ?_) (Finset.mem_range.2 hmn)
+    exact mul_nonneg (nortonExp_pos _).le
+      (sub_nonneg.2 (hp.1.2.2 i (Finset.mem_range.1 hi)))
+  exact h5.trans_le h6
+
+/-! ### Lower sums are trapped below the finite halo of `ω^ω` -/
+
+/-- The exponential left-Riemann telescoping bound over the reals: for any real nodes
+`d`, the tagged sum `Σ e^{dᵢ}(dᵢ₊₁ − dᵢ)` over `[a, b)` is at most `e^{d_b} − e^{d_a}`.
+(No monotonicity is needed: `1 + t ≤ eᵗ` holds for all real `t`.) -/
+private theorem real_exp_riemann_le (d : ℕ → ℝ) {a b : ℕ} (hab : a ≤ b) :
+    ∑ i ∈ Finset.Ico a b, Real.exp (d i) * (d (i + 1) - d i) ≤
+      Real.exp (d b) - Real.exp (d a) := by
+  have hstep : ∀ i, Real.exp (d i) * (d (i + 1) - d i) ≤
+      Real.exp (d (i + 1)) - Real.exp (d i) := by
+    intro i
+    have h := Real.add_one_le_exp (d (i + 1) - d i)
+    have hpos := Real.exp_pos (d i)
+    have h2 : Real.exp (d i) * (d (i + 1) - d i + 1) ≤
+        Real.exp (d i) * Real.exp (d (i + 1) - d i) :=
+      mul_le_mul_of_nonneg_left h hpos.le
+    rw [← Real.exp_add] at h2
+    have h3 : d i + (d (i + 1) - d i) = d (i + 1) := by ring
+    rw [h3] at h2
+    nlinarith
+  calc ∑ i ∈ Finset.Ico a b, Real.exp (d i) * (d (i + 1) - d i)
+      ≤ ∑ i ∈ Finset.Ico a b, (Real.exp (d (i + 1)) - Real.exp (d i)) :=
+        Finset.sum_le_sum fun i _ ↦ hstep i
+    _ = Real.exp (d b) - Real.exp (d a) := by
+        have h1 := Finset.sum_Ico_consecutive
+          (fun i ↦ Real.exp (d (i + 1)) - Real.exp (d i)) (Nat.zero_le a) hab
+        have h2 := Finset.sum_range_sub (fun i ↦ Real.exp (d i)) a
+        have h3 := Finset.sum_range_sub (fun i ↦ Real.exp (d i)) b
+        rw [Finset.range_eq_Ico] at h2 h3
+        linarith
+
+/-- **Lower sums are trapped**: every lower exponential Darboux sum over the lattice
+lies strictly below `ω^ω + c` for *every* finite `c`. The finite-galaxy block
+contributes at most `(finite)·ω`; the top-galaxy block is `ω^ω` times a surreal whose
+standard part is a left Riemann sum of `eᵗ` over `(−∞, 0]`, hence loses at least the
+non-infinitesimal fraction `e^{st(x₍ₘ₊₁₎ − ω)}` of `1`. -/
+theorem lowerSumExp_lt_wpow_add {x : ℕ → Surreal} {n : ℕ}
+    (hp : IsExpPartitionOn x n 0 (ω^ (1 : Surreal))) {c : Surreal} (hc : IsFinite c) :
+    lowerSumExp x n < ω^ ω^ (1 : Surreal) + c := by
+  obtain ⟨m, hmn, hfin, htop⟩ := exists_split hp
+  have hxle : ∀ i ≤ n, x i ≤ ω^ (1 : Surreal) := fun i hi ↦ hp.1.le_right hi
+  have hx0 : ∀ i ≤ n, 0 ≤ x i := fun i hi ↦ hp.1.left_le hi
+  have hDfin : ∀ i, m < i → i ≤ n → IsFinite (x i - ω^ (1 : Surreal)) :=
+    fun i h1 h2 ↦ (htop i h1 h2).1
+  -- Block A: the finite-galaxy block is at most K·ω with K finite
+  have hA : ∑ i ∈ Finset.range (m + 1), nortonExp (x i) * (x (i + 1) - x i) ≤
+      (∑ i ∈ Finset.range (m + 1), expFin (x i)) * ω^ (1 : Surreal) := by
+    rw [Finset.sum_mul]
+    refine Finset.sum_le_sum fun i hi ↦ ?_
+    have him : i ≤ m := Nat.lt_succ_iff.1 (Finset.mem_range.1 hi)
+    rw [nortonExp_of_isFinite (hfin i him)]
+    refine mul_le_mul_of_nonneg_left ?_ (expFin_pos' _).le
+    have h1 : x (i + 1) ≤ ω^ (1 : Surreal) := hxle (i + 1) (by omega)
+    have h2 : 0 ≤ x i := hx0 i (by omega)
+    linarith
+  have hKfin : IsFinite (∑ i ∈ Finset.range (m + 1), expFin (x i)) :=
+    isFinite_sum fun i hi ↦ isFinite_expFin (hfin i (Nat.lt_succ_iff.1 (Finset.mem_range.1 hi)))
+  obtain ⟨k₀, hk₀⟩ := isFinite_iff.1 hKfin
+  have hA' : ∑ i ∈ Finset.range (m + 1), nortonExp (x i) * (x (i + 1) - x i) ≤
+      (k₀ : Surreal) * ω^ (1 : Surreal) :=
+    hA.trans (mul_le_mul_of_nonneg_right ((le_abs_self _).trans hk₀) (wpow_nonneg _))
+  -- Block B: the top-galaxy block is ω^ω times the tagged sum S
+  have hB : ∑ i ∈ Finset.Ico (m + 1) n, nortonExp (x i) * (x (i + 1) - x i) =
+      ω^ ω^ (1 : Surreal) * ∑ i ∈ Finset.Ico (m + 1) n,
+        expFin (x i - ω^ (1 : Surreal)) *
+          ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal))) := by
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i hi ↦ ?_
+    obtain ⟨hi1, hi2⟩ := Finset.mem_Ico.1 hi
+    rw [nortonExp_of_not_isFinite (htop i (by omega) (by omega)).2]
+    ring
+  -- S and its standard part
+  have hSfin : IsFinite (∑ i ∈ Finset.Ico (m + 1) n,
+      expFin (x i - ω^ (1 : Surreal)) *
+        ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) := by
+    refine isFinite_sum fun i hi ↦ ?_
+    obtain ⟨hi1, hi2⟩ := Finset.mem_Ico.1 hi
+    exact (isFinite_expFin (hDfin i (by omega) (by omega))).mul
+      ((hDfin (i + 1) (by omega) (by omega)).sub (hDfin i (by omega) (by omega)))
+  have hstS : stdPart (∑ i ∈ Finset.Ico (m + 1) n,
+      expFin (x i - ω^ (1 : Surreal)) *
+        ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) =
+      ∑ i ∈ Finset.Ico (m + 1) n, Real.exp (stdPart (x i - ω^ (1 : Surreal))) *
+        (stdPart (x (i + 1) - ω^ (1 : Surreal)) - stdPart (x i - ω^ (1 : Surreal))) := by
+    rw [stdPart_sum (fun i hi ↦ ?_)]
+    · refine Finset.sum_congr rfl fun i hi ↦ ?_
+      obtain ⟨hi1, hi2⟩ := Finset.mem_Ico.1 hi
+      rw [stdPart_mul (isFinite_expFin (hDfin i (by omega) (by omega)))
+          ((hDfin (i + 1) (by omega) (by omega)).sub (hDfin i (by omega) (by omega))),
+        stdPart_expFin (hDfin i (by omega) (by omega)),
+        stdPart_sub (hDfin (i + 1) (by omega) (by omega)) (hDfin i (by omega) (by omega))]
+    · obtain ⟨hi1, hi2⟩ := Finset.mem_Ico.1 hi
+      exact (isFinite_expFin (hDfin i (by omega) (by omega))).mul
+        ((hDfin (i + 1) (by omega) (by omega)).sub (hDfin i (by omega) (by omega)))
+  -- the real Riemann bound: st S ≤ 1 − exp (st (x (m+1) − ω))
+  have hd0 : stdPart (x n - ω^ (1 : Surreal)) = 0 := by
+    rw [hp.1.2.1, sub_self, ArchimedeanClass.stdPart_zero]
+  have hst_le : stdPart (∑ i ∈ Finset.Ico (m + 1) n,
+      expFin (x i - ω^ (1 : Surreal)) *
+        ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) ≤
+      1 - Real.exp (stdPart (x (m + 1) - ω^ (1 : Surreal))) := by
+    rw [hstS]
+    have h := real_exp_riemann_le (fun i ↦ stdPart (x i - ω^ (1 : Surreal)))
+      (show m + 1 ≤ n by omega)
+    rw [hd0, Real.exp_zero] at h
+    exact h
+  -- rationals wedged under the retained fraction
+  obtain ⟨q, hq0, hqρ⟩ :=
+    exists_rat_btwn (Real.exp_pos (stdPart (x (m + 1) - ω^ (1 : Surreal))))
+  obtain ⟨q', hq'1, hq'2⟩ := exists_rat_btwn hqρ
+  -- S ≤ 1 − cast q, hence V·S ≤ V − (cast q)·V
+  have hι := infinitesimal_sub_stdPart hSfin
+  have habs : |(∑ i ∈ Finset.Ico (m + 1) n,
+      expFin (x i - ω^ (1 : Surreal)) *
+        ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) -
+      ((stdPart (∑ i ∈ Finset.Ico (m + 1) n,
+        expFin (x i - ω^ (1 : Surreal)) *
+          ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) : ℝ) : Surreal)| <
+      ((q' - q : ℚ) : Surreal) :=
+    hι.abs_lt_ratCast (by exact_mod_cast sub_pos.2 (show (q : ℝ) < (q' : ℝ) from hq'1))
+  have hcast1 : ((stdPart (∑ i ∈ Finset.Ico (m + 1) n,
+      expFin (x i - ω^ (1 : Surreal)) *
+        ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) : ℝ) : Surreal) ≤
+      ((1 - Real.exp (stdPart (x (m + 1) - ω^ (1 : Surreal))) : ℝ) : Surreal) :=
+    Real.toSurreal_le_iff.2 hst_le
+  have hSle : (∑ i ∈ Finset.Ico (m + 1) n,
+      expFin (x i - ω^ (1 : Surreal)) *
+        ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) ≤
+      1 - ((q : ℝ) : Surreal) := by
+    have h1 := (le_abs_self _).trans_lt habs
+    have h2 : ((1 - Real.exp (stdPart (x (m + 1) - ω^ (1 : Surreal))) : ℝ) : Surreal) +
+        ((q' - q : ℚ) : Surreal) ≤ 1 - ((q : ℝ) : Surreal) := by
+      rw [← Real.toSurreal_ratCast, ← Real.toSurreal_add, ← Real.toSurreal_one,
+        ← Real.toSurreal_sub]
+      refine Real.toSurreal_le_iff.2 ?_
+      push_cast
+      linarith
+    linarith
+  have hVS : ω^ ω^ (1 : Surreal) * (∑ i ∈ Finset.Ico (m + 1) n,
+      expFin (x i - ω^ (1 : Surreal)) *
+        ((x (i + 1) - ω^ (1 : Surreal)) - (x i - ω^ (1 : Surreal)))) ≤
+      ω^ ω^ (1 : Surreal) - ((q : ℝ) : Surreal) * ω^ ω^ (1 : Surreal) := by
+    have h := mul_le_mul_of_nonneg_left hSle (wpow_nonneg (ω^ (1 : Surreal)))
+    have hexp : ω^ ω^ (1 : Surreal) * (1 - ((q : ℝ) : Surreal)) =
+        ω^ ω^ (1 : Surreal) - ((q : ℝ) : Surreal) * ω^ ω^ (1 : Surreal) := by ring
+    linarith [hexp ▸ h]
+  -- the wpow class comparison: (k₀ + j)·ω < (cast q)·ω^ω
+  obtain ⟨j, hj⟩ := isFinite_iff.1 hc
+  have hcj : -(j : Surreal) ≤ c := by
+    have := (abs_le.1 hj).1
+    linarith
+  have hmain : ((k₀ + j : ℕ) : Surreal) * ω^ (1 : Surreal) <
+      ((q : ℝ) : Surreal) * ω^ ω^ (1 : Surreal) := by
+    have h := mul_wpow_lt_mul_wpow ((k₀ + j : ℕ) : ℝ)
+      (show (0 : ℝ) < (q : ℝ) from hq0) one_lt_wpow_one
+    rwa [Real.toSurreal_natCast] at h
+  have hΩ1 : (1 : Surreal) ≤ ω^ (1 : Surreal) := one_lt_wpow_one.le
+  have hfinal : (k₀ : Surreal) * ω^ (1 : Surreal) - c ≤
+      ((k₀ + j : ℕ) : Surreal) * ω^ (1 : Surreal) := by
+    have hjΩ : (j : Surreal) ≤ (j : Surreal) * ω^ (1 : Surreal) :=
+      le_mul_of_one_le_right (Nat.cast_nonneg j) hΩ1
+    have hpc : ((k₀ + j : ℕ) : Surreal) * ω^ (1 : Surreal) =
+        (k₀ : Surreal) * ω^ (1 : Surreal) + (j : Surreal) * ω^ (1 : Surreal) := by
+      push_cast
+      ring
+    rw [hpc]
+    linarith
+  -- assemble
+  have hsplit : lowerSumExp x n =
+      (∑ i ∈ Finset.range (m + 1), nortonExp (x i) * (x (i + 1) - x i)) +
+      ∑ i ∈ Finset.Ico (m + 1) n, nortonExp (x i) * (x (i + 1) - x i) := by
+    rw [lowerSumExp, Finset.range_eq_Ico,
+      ← Finset.sum_Ico_consecutive _ (Nat.zero_le (m + 1)) (show m + 1 ≤ n by omega),
+      Finset.range_eq_Ico]
+  rw [hsplit, hB]
+  linarith
+
 end Surreal
 
 end
