@@ -201,6 +201,24 @@ theorem omega0_add_one_le_birthday_of_not_isFinite_of_ne {y : Surreal}
   · exact h1 h
   · exact h2 h
 
+/-- **An exact transfinite birthday**: `birthday (1 + ω) = ω + 1`. The upper bound is the
+additivity estimate; the lower bound is the day-`ω` classification (an infinite surreal
+other than `±ω` is born at or after day `ω + 1`). The second exactly-computed birthday of
+an infinite surreal in this development, after `birthday ω = ω`. -/
+theorem birthday_one_add_wpow :
+    ((1 : Surreal) + ω^ (1 : Surreal)).birthday = NatOrdinal.of Ordinal.omega0 + 1 := by
+  have hω : (0 : Surreal) < ω^ (1 : Surreal) := wpow_pos _
+  refine le_antisymm ?_ ?_
+  · refine (birthday_add_le _ _).trans (le_of_eq ?_)
+    rw [birthday_one, birthday_wpow_one, add_comm]
+  · refine omega0_add_one_le_birthday_of_not_isFinite_of_ne
+      (not_isFinite_of_wpow_lt (lt_one_add _)) ?_ ?_
+    · intro h
+      exact one_ne_zero (by linarith : (1 : Surreal) = 0)
+    · intro h
+      have h2 : (1 : Surreal) + 2 * ω^ (1 : Surreal) = 0 := by linarith
+      linarith
+
 /-! ### Identification theorems for canonical sums -/
 
 variable {t u : ℕ → Surreal}
