@@ -52,6 +52,7 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Form dependence** | The same genetic principle over naturals-only options gives `ω²` — not even the Archimedean class of `e^ω` survives; Conway's "the integral depends on the form" as theorems | [`Infinity/Norton.lean`](Infinity/Norton.lean) |
 | **Conway's day-ω census** | A surreal is born by day `ω` **iff** it is a real, `±ω`, or a dyadic neighbour `d ± 1/ω` — as a single kernel-checked `iff`; `birthday (1/ω) = ω`, every real born by day `ω` (the birthday bound left open upstream) | [`Infinity/DayOmega.lean`](Infinity/DayOmega.lean) |
 | **The day-ω exp criterion, settled** | A product of exponentials of positive infinitesimals is born by day `ω` iff it equals `1 + 1/ω` exactly — the census leaves no other value; the geometric halo is empty at day `ω` (every Hahn sum of `Σ ω⁻ᵏ` born ≥ `ω+1`) | [`Infinity/DayOmega.lean`](Infinity/DayOmega.lean) |
+| **The first exact exponential value** | `exp (log (1 + 1/ω)) = 1 + 1/ω` on **No**: the canonical-sum exponential at the canonical sum of the log series evaluates *exactly* — truncated `exp ∘ log = id` as polynomial divisibility, pushed through the domination calculus; `birthday (exp (log (1+1/ω))) = ω` while the logarithm itself is born ≥ `ω+1`: the exponential can strictly simplify | [`Infinity/ExpLog.lean`](Infinity/ExpLog.lean) |
 
 ## The one-paragraph story
 
