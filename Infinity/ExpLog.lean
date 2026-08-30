@@ -1,4 +1,5 @@
 import Infinity.DayOmega
+import Infinity.FiniteDeriv
 
 /-!
 # The first exact exponential value: `exp (log (1 + ω⁻¹)) = 1 + ω⁻¹`
@@ -192,6 +193,244 @@ theorem X_pow_dvd_expPoly_comp_logPoly (N : ℕ) :
     rw [Polynomial.coeff_sub, Polynomial.coeff_zero_eq_eval_zero,
       Polynomial.eval_comp, logPoly_eval_zero, expPoly_eval_zero (by omega)]
     simp
+
+/-! ### The logarithm series and its canonical sum -/
+
+/-- The Maclaurin series of `log (1 + x)` at `x = ω⁻¹`:
+`t k = (−1)ᵏ ω^{−(k+1)}/(k+1)`. -/
+def logSeries (k : ℕ) : Surreal :=
+  (((-1) ^ k / (k + 1) : ℝ) : Surreal) * ((ω^ (1 : Surreal))⁻¹) ^ (k + 1)
+
+private theorem logCoeff_ne_zero (k : ℕ) : ((-1) ^ k / (k + 1) : ℝ) ≠ 0 := by
+  refine div_ne_zero (pow_ne_zero _ (by norm_num)) (by positivity)
+
+private theorem inv_wpow_infinitesimal : Infinitesimal ((ω^ (1 : Surreal))⁻¹) :=
+  infinitesimal_inv_wpow one_pos
+
+private theorem inv_wpow_pos : (0 : Surreal) < (ω^ (1 : Surreal))⁻¹ :=
+  inv_pos.2 (wpow_pos _)
+
+theorem logSeries_strict_dominating (k : ℕ) :
+    ArchimedeanClass.mk (logSeries k) < ArchimedeanClass.mk (logSeries (k + 1)) := by
+  unfold logSeries
+  rw [ArchimedeanClass.mk_mul, ArchimedeanClass.mk_mul, mk_realCast (logCoeff_ne_zero k),
+    mk_realCast (logCoeff_ne_zero (k + 1)), zero_add, zero_add]
+  exact mk_pow_lt_mk_pow_succ inv_wpow_infinitesimal inv_wpow_pos (k + 1)
+
+/-- **The canonical logarithm of `1 + ω⁻¹`**: the canonical (birthday-simplest)
+transfinite sum of the Maclaurin series of `log (1 + x)` at `ω⁻¹`. -/
+def logOmega : Surreal :=
+  hahnSum logSeries_strict_dominating
+
+theorem isHahnSum_logSeries_logOmega : IsHahnSum logSeries logOmega :=
+  isHahnSum_hahnSum _
+
+/-- The partial sums of the logarithm series are the truncated-logarithm values. -/
+theorem partialSum_logSeries_eq (N : ℕ) :
+    partialSum logSeries N = (logPoly N).eval₂ realHom ((ω^ (1 : Surreal))⁻¹) := by
+  rw [partialSum, logPoly, Polynomial.eval₂_finsetSum]
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
+  rw [Polynomial.eval₂_mul, Polynomial.eval₂_C, Polynomial.eval₂_X_pow]
+  rfl
+
+private theorem partialSum_logSeries_one :
+    partialSum logSeries 1 = (ω^ (1 : Surreal))⁻¹ := by
+  rw [partialSum, Finset.sum_range_one]
+  unfold logSeries
+  norm_num
+
+private theorem mk_logSeries (n : ℕ) : ArchimedeanClass.mk (logSeries n) =
+    ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ (n + 1)) := by
+  unfold logSeries
+  rw [ArchimedeanClass.mk_mul, mk_realCast (logCoeff_ne_zero n), zero_add]
+
+/-- The canonical logarithm is `ω⁻¹` to leading order. -/
+theorem mk_lt_mk_logOmega_sub_inv :
+    ArchimedeanClass.mk ((ω^ (1 : Surreal))⁻¹) <
+      ArchimedeanClass.mk (logOmega - (ω^ (1 : Surreal))⁻¹) := by
+  have h := isHahnSum_logSeries_logOmega 1
+  rw [partialSum_logSeries_one] at h
+  calc ArchimedeanClass.mk ((ω^ (1 : Surreal))⁻¹)
+      = ArchimedeanClass.mk (logSeries 0) := by
+        rw [mk_logSeries, zero_add, pow_one]
+    _ < ArchimedeanClass.mk (logSeries 1) := logSeries_strict_dominating 0
+    _ ≤ _ := h
+
+theorem mk_logOmega : ArchimedeanClass.mk logOmega =
+    ArchimedeanClass.mk ((ω^ (1 : Surreal))⁻¹) := by
+  have h : logOmega = (ω^ (1 : Surreal))⁻¹ + (logOmega - (ω^ (1 : Surreal))⁻¹) := by ring
+  rw [h, ArchimedeanClass.mk_add_eq_mk_left mk_lt_mk_logOmega_sub_inv]
+
+theorem logOmega_infinitesimal : Infinitesimal logOmega := by
+  rw [infinitesimal_def, mk_logOmega]
+  exact inv_wpow_infinitesimal
+
+theorem logOmega_pos : 0 < logOmega := by
+  have habs := abs_lt_abs_of_mk_lt mk_lt_mk_logOmega_sub_inv
+  rw [abs_of_pos inv_wpow_pos] at habs
+  have h := (abs_lt.1 habs).1
+  linarith
+
+theorem isFinite_logOmega : IsFinite logOmega :=
+  logOmega_infinitesimal.isFinite
+
+/-! ### The domination half: `1 + ω⁻¹` is a Hahn sum of the exponential series at
+the canonical logarithm -/
+
+private theorem mk_pow_congr {a b : Surreal}
+    (h : ArchimedeanClass.mk a = ArchimedeanClass.mk b) (n : ℕ) :
+    ArchimedeanClass.mk (a ^ n) = ArchimedeanClass.mk (b ^ n) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [pow_succ, pow_succ, ArchimedeanClass.mk_mul, ArchimedeanClass.mk_mul, ih, h]
+
+/-- Sums of termwise-dominated surreals are dominated. -/
+private theorem le_mk_sum' {c : ArchimedeanClass Surreal} {s : Finset ℕ} {f : ℕ → Surreal}
+    (h : ∀ i ∈ s, c ≤ ArchimedeanClass.mk (f i)) :
+    c ≤ ArchimedeanClass.mk (∑ i ∈ s, f i) := by
+  induction s using Finset.cons_induction with
+  | empty =>
+    rw [Finset.sum_empty, ArchimedeanClass.mk_zero]
+    exact le_top
+  | cons a s ha ih =>
+    rw [Finset.sum_cons]
+    exact le_trans (le_min (h a (Finset.mem_cons_self ..))
+      (ih fun i hi ↦ h i (Finset.mem_cons_of_mem hi))) (ArchimedeanClass.min_le_mk_add ..)
+
+/-- The partial sums of the exponential series are the truncated-exponential values. -/
+theorem partialSum_expSeries_eq_eval (x : Surreal) (n : ℕ) :
+    partialSum (fun k ↦ x ^ k / ((k.factorial : ℕ) : Surreal)) n =
+      (expPoly n).eval₂ realHom x := by
+  rw [partialSum, expPoly, Polynomial.eval₂_finsetSum]
+  refine Finset.sum_congr rfl fun k _ ↦ ?_
+  rw [Polynomial.eval₂_mul, Polynomial.eval₂_C, Polynomial.eval₂_X_pow, map_inv₀ realHom,
+    realHom_apply, Real.toSurreal_natCast, div_eq_mul_inv, mul_comm]
+
+/-- **`1 + ω⁻¹` satisfies the domination equations of the exponential series at the
+canonical logarithm**: the residual at stage `n` combines the truncated-composition
+defect (`X^n`-divisible, by the algebraic half) with the substitution error
+`E_n(σ) − E_n(L_n(ω⁻¹))` (a multiple of the stage-`n` Hahn residual of `σ`, via the
+geometric cofactors), both of class at least that of `ω^{−n}`. -/
+theorem isHahnSum_expSeries_one_add :
+    IsHahnSum (fun k ↦ logOmega ^ k / ((k.factorial : ℕ) : Surreal))
+      (1 + (ω^ (1 : Surreal))⁻¹) := by
+  intro n
+  -- the polynomial factorization of the composition defect
+  obtain ⟨P, hP⟩ := X_pow_dvd_expPoly_comp_logPoly n n le_rfl
+  -- Term 1: `E_n(Lval) − (1 + ω⁻¹) = ω^{−n}·P(ω⁻¹)`
+  have hterm1 : (expPoly n).eval₂ realHom (partialSum logSeries n) -
+      (1 + (ω^ (1 : Surreal))⁻¹) =
+      ((ω^ (1 : Surreal))⁻¹) ^ n * P.eval₂ realHom ((ω^ (1 : Surreal))⁻¹) := by
+    have h := congrArg (Polynomial.eval₂ realHom ((ω^ (1 : Surreal))⁻¹)) hP
+    rw [Polynomial.eval₂_sub, Polynomial.eval₂_mul, Polynomial.eval₂_X_pow,
+      Polynomial.eval₂_add, Polynomial.eval₂_one, Polynomial.eval₂_X,
+      Polynomial.eval₂_comp, ← partialSum_logSeries_eq] at h
+    exact h
+  -- Term 2: `E_n(σ) − E_n(Lval)` is dominated by the stage-`n` Hahn residual
+  have hLfin : IsFinite (partialSum logSeries n) := by
+    rw [partialSum_logSeries_eq]
+    exact isFinite_eval₂ _ inv_wpow_infinitesimal.isFinite
+  have hterm2 : ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n) ≤
+      ArchimedeanClass.mk ((expPoly n).eval₂ realHom logOmega -
+        (expPoly n).eval₂ realHom (partialSum logSeries n)) := by
+    rw [← partialSum_expSeries_eq_eval, ← partialSum_expSeries_eq_eval,
+      partialSum, partialSum, ← Finset.sum_sub_distrib]
+    refine le_mk_sum' fun k _ ↦ ?_
+    have hsplit : logOmega ^ k / ((k.factorial : ℕ) : Surreal) -
+        (partialSum logSeries n) ^ k / ((k.factorial : ℕ) : Surreal) =
+        (((k.factorial : ℕ) : Surreal))⁻¹ *
+          ((∑ i ∈ Finset.range k,
+            logOmega ^ i * (partialSum logSeries n) ^ (k - 1 - i)) *
+            (logOmega - partialSum logSeries n)) := by
+      rw [(Commute.all logOmega (partialSum logSeries n)).geom_sum₂_mul k]
+      ring
+    rw [hsplit, ArchimedeanClass.mk_mul, ArchimedeanClass.mk_mul]
+    have hinv0 : ArchimedeanClass.mk ((((k.factorial : ℕ) : Surreal))⁻¹) = 0 := by
+      rw [ArchimedeanClass.mk_inv, mk_factorial, neg_zero]
+    have hcof : (0 : ArchimedeanClass Surreal) ≤ ArchimedeanClass.mk
+        (∑ i ∈ Finset.range k,
+          logOmega ^ i * (partialSum logSeries n) ^ (k - 1 - i)) := by
+      refine isFinite_sum fun i _ ↦ ?_
+      exact (isFinite_logOmega.pow i).mul (hLfin.pow (k - 1 - i))
+    have hres : ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n) ≤
+        ArchimedeanClass.mk (logOmega - partialSum logSeries n) := by
+      refine le_trans ?_ (isHahnSum_logSeries_logOmega n)
+      rw [mk_logSeries]
+      exact (mk_pow_lt_mk_pow_succ inv_wpow_infinitesimal inv_wpow_pos n).le
+    calc ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n)
+        = 0 + (0 + ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n)) := by
+          rw [zero_add, zero_add]
+      _ ≤ ArchimedeanClass.mk ((((k.factorial : ℕ) : Surreal))⁻¹) +
+          (ArchimedeanClass.mk (∑ i ∈ Finset.range k,
+              logOmega ^ i * (partialSum logSeries n) ^ (k - 1 - i)) +
+            ArchimedeanClass.mk (logOmega - partialSum logSeries n)) := by
+          rw [hinv0]
+          exact add_le_add le_rfl (add_le_add hcof hres)
+  -- assemble the residual
+  have hsplit : 1 + (ω^ (1 : Surreal))⁻¹ -
+      partialSum (fun k ↦ logOmega ^ k / ((k.factorial : ℕ) : Surreal)) n =
+      -((expPoly n).eval₂ realHom (partialSum logSeries n) - (1 + (ω^ (1 : Surreal))⁻¹)) +
+      -((expPoly n).eval₂ realHom logOmega -
+        (expPoly n).eval₂ realHom (partialSum logSeries n)) := by
+    rw [partialSum_expSeries_eq_eval]
+    ring
+  have hmk1 : ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n) ≤
+      ArchimedeanClass.mk ((expPoly n).eval₂ realHom (partialSum logSeries n) -
+        (1 + (ω^ (1 : Surreal))⁻¹)) := by
+    rw [hterm1, ArchimedeanClass.mk_mul]
+    have hPfin : (0 : ArchimedeanClass Surreal) ≤
+        ArchimedeanClass.mk (P.eval₂ realHom ((ω^ (1 : Surreal))⁻¹)) :=
+      isFinite_eval₂ _ inv_wpow_infinitesimal.isFinite
+    calc ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n)
+        = ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n) + 0 := (add_zero _).symm
+      _ ≤ _ := add_le_add le_rfl hPfin
+  have htarget : ArchimedeanClass.mk
+      (logOmega ^ n / ((n.factorial : ℕ) : Surreal)) =
+      ArchimedeanClass.mk (((ω^ (1 : Surreal))⁻¹) ^ n) := by
+    rw [ArchimedeanClass.mk_div, mk_factorial, sub_zero]
+    exact mk_pow_congr mk_logOmega n
+  show ArchimedeanClass.mk (logOmega ^ n / ((n.factorial : ℕ) : Surreal)) ≤ _
+  rw [htarget, hsplit]
+  refine le_trans (le_min ?_ ?_) (ArchimedeanClass.min_le_mk_add ..)
+  · rwa [ArchimedeanClass.mk_neg]
+  · rwa [ArchimedeanClass.mk_neg]
+
+/-! ### The exact evaluation -/
+
+/-- `1 + ω⁻¹` is born by day `ω` (transport of the census bound). -/
+theorem birthday_one_add_inv_wpow_le :
+    ((1 : Surreal) + (ω^ (1 : Surreal))⁻¹).birthday ≤ NatOrdinal.of Ordinal.omega0 := by
+  have h := birthday_dyadic_add_wpow_neg_one_le 1
+  have hone : ((1 : Dyadic) : Surreal) = 1 := by
+    show (((1 : Dyadic) : ℚ) : Surreal) = 1
+    norm_num
+  have hwp : ω^ (-1 : Surreal) = (ω^ (1 : Surreal))⁻¹ := by
+    rw [show (-1 : Surreal) = -(1 : Surreal) from rfl, wpow_neg]
+  rwa [hone, hwp] at h
+
+/-- **The first exact exponential value**: the canonical-sum exponential at the
+canonical logarithm of `1 + ω⁻¹` is exactly `1 + ω⁻¹` — `exp (log (1 + ω⁻¹)) = 1 + ω⁻¹`
+on **No**, machine-checked. The candidate is a Hahn sum by the two-half analysis; it is
+born by day `ω` while every Hahn sum of the series is born at or after day `ω`; so it
+is the birthday-minimal sum, i.e. the canonical value. -/
+theorem expInf_logOmega_eq :
+    expInf logOmega logOmega_infinitesimal logOmega_pos.ne' =
+      1 + (ω^ (1 : Surreal))⁻¹ := by
+  unfold expInf
+  rw [hahnSum_eq_iff]
+  refine ⟨isHahnSum_expSeries_one_add, fun w hw ↦ ?_⟩
+  exact birthday_one_add_inv_wpow_le.trans
+    (omega0_le_birthday_of_isHahnSum_expSeries logOmega_infinitesimal logOmega_pos hw)
+
+/-- The exponential achieves the smallest transfinite birthday possible for it:
+`birthday (expInf (logOmega)) = ω` exactly. -/
+theorem birthday_expInf_logOmega :
+    (expInf logOmega logOmega_infinitesimal logOmega_pos.ne').birthday =
+      NatOrdinal.of Ordinal.omega0 := by
+  refine le_antisymm ?_ (omega0_le_birthday_expInf logOmega_infinitesimal logOmega_pos)
+  rw [expInf_logOmega_eq]
+  exact birthday_one_add_inv_wpow_le
 
 end Surreal
 
