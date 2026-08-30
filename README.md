@@ -54,6 +54,18 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The day-ω exp criterion, settled** | A product of exponentials of positive infinitesimals is born by day `ω` iff it equals `1 + 1/ω` exactly — the census leaves no other value; the geometric halo is empty at day `ω` (every Hahn sum of `Σ ω⁻ᵏ` born ≥ `ω+1`) | [`Infinity/DayOmega.lean`](Infinity/DayOmega.lean) |
 | **The first exact exponential value** | `exp (log (1 + 1/ω)) = 1 + 1/ω` on **No**: the canonical-sum exponential at the canonical sum of the log series evaluates *exactly* — truncated `exp ∘ log = id` as polynomial divisibility, pushed through the domination calculus; `birthday (exp (log (1+1/ω))) = ω` while the logarithm itself is born ≥ `ω+1`: the exponential can strictly simplify | [`Infinity/ExpLog.lean`](Infinity/ExpLog.lean) |
 
+### The census ladder and the geometric squeeze (2026-08-30, evening session)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **The dyadic birth tree, formalized** | Heights, children `x ± 1/(2·den x)`, the **interleaving theorem** (between any two dyadics lies one at most one day younger), finiteness of each day's census | [`Infinity/Census.lean`](Infinity/Census.lean) |
+| **The halo grid realized** | `a + r·ω⁻¹` is born by day `ω + hgt r` for every real `a` and dyadic `r` (one day sharper over dyadic anchors) — the day-`ω+n` newborns, by parametric order-pinned cofinality | [`Infinity/HaloRealization.lean`](Infinity/HaloRealization.lean) |
+| **The uniform census below `ω·2`** | One induction for all days `ω+n` at once: a finite surreal born by day `ω+n` **is** `a + r·ω⁻¹` with `a` its standard part and `hgt r ≤ n+1` (`≤ n` for non-dyadic `a`); as an **iff**; **exact** birthdays for every grid point | [`Infinity/GeometricBirthday.lean`](Infinity/GeometricBirthday.lean) |
+| **The geometric halo is empty on `[ω, ω·2)`** | Every Hahn sum of `Σ ω⁻ᵏ` is born at or after day **`ω·2`** — the uniformity theorem replaces the day-by-day censuses in one stroke | [`Infinity/GeometricBirthday.lean`](Infinity/GeometricBirthday.lean) |
+| **The day-`ω+1` census** | Born by day `ω+1` **iff** a grid point of height ≤ 1 over a real / ≤ 2 over a dyadic, or `±ω`, `±(ω+1)`, `±(ω−1)`; `birthday (ω ± 1) = ω + 1` exactly | [`Infinity/DayOmegaOne.lean`](Infinity/DayOmegaOne.lean) |
+| **The halving lemma + `ω`-power birthdays** | `G · ½ ≈ !{0 ∣ G}` for chain games (order-pinned halving); `birthday (ω⁻ᵏ·2⁻ʲ) ≤ ω·k + j` with **no** multiplicative birthday bounds (open upstream) | [`Infinity/GeometricUpper.lean`](Infinity/GeometricUpper.lean) |
+| **The geometric squeeze** | The canonical sum `hahnSum (Σ ω⁻ᵏ)` is born in the window **`[ω·2, ω²]`**; halo minimality (`= ω/(ω−1)`, born exactly `ω²`) is now squeezed to the `ω⁻²`-and-finer grid censuses plus an upper bound for `ω/(ω−1)` itself | [`Infinity/GeometricUpper.lean`](Infinity/GeometricUpper.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
