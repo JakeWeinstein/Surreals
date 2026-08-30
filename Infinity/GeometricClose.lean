@@ -104,6 +104,17 @@ theorem birthday_hahnSum_geometric_eq :
   rw [hahnSum_geometric_eq]
   exact birthday_geomSum_limit_eq
 
+/-- **Identification at the minimum**: any Hahn sum of the geometric series born by day
+`ω·ω` *is* `ω/(ω−1)`. Every other Hahn sum is born strictly later. -/
+theorem isHahnSum_geometric_eq_of_birthday_le {w : Surreal.{0}}
+    (hw : IsHahnSum (fun k ↦ ε₀ ^ k) w) (hb : w.birthday ≤ Ω * Ω) :
+    w = ((1 : Surreal.{0}) - ε₀)⁻¹ := by
+  have h1 : w.birthday ≤ (hahnSum geometric_strict_dominating).birthday := by
+    rw [birthday_hahnSum_geometric_eq]
+    exact hb
+  rw [← hahnSum_eq_of_isHahnSum_of_birthday_le geometric_strict_dominating hw h1,
+    hahnSum_geometric_eq]
+
 /-! ### Exact partial-sum birthdays -/
 
 /-- `S₂ = 1 + ω⁻¹` is born exactly on day `ω`. -/

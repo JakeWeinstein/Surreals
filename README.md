@@ -67,6 +67,17 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The geometric squeeze** | The canonical sum `hahnSum (Σ ω⁻ᵏ)` is born in the window **`[ω·2, ω²]`** | [`Infinity/GeometricUpper.lean`](Infinity/GeometricUpper.lean) |
 | **`ω/(ω−1)` born by day `ω²`** | The Conway **inverse game** breaks the order-pinning deadlock: every inverse-option word sits at distance exactly `ω^k` from `(ω−1)⁻¹` (the word-class invariant), giving mutual cofinality with the partial-sum cut; **the halo-minimality conjecture is now equivalent to the single inequality `birthday (ω/(ω−1)) ≤ birthday (hahnSum Σ ω⁻ᵏ)`**, both sides in `[ω·2, ω²]` | [`Infinity/InverseBirthday.lean`](Infinity/InverseBirthday.lean) |
 
+### The tube census and the close (2026-08-30, night session)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **The scale-parametric engine** | The order-pinning grid realization, parametric in the scale pair: for any `(V, W)` with `W = {0 ∣ q·V}` and a `V`-separated anchor, the dyadic `W`-grid over the anchor costs one day per birth-tree step over any base ordinal | [`Infinity/ScaleRealization.lean`](Infinity/ScaleRealization.lean) |
+| **Partial sums priced exactly** | The level pack: anchors for every partial sum `Sₘ` with `birthday (S_{B+1} + t·ω^{−(B+1)}) ≤ ω·(B+1) + (hgt t − 1)`; in particular `birthday Sₙ = ω·(n−1)` for `n ≥ 2` (exactness in `GeometricClose`) | [`Infinity/TubeCensus.lean`](Infinity/TubeCensus.lean) |
+| **THE TUBE CENSUS** | The uniform census below `ω²`, all blocks at once — and the discovery that no two-scale census is needed: in block `[ω·(B+1), ω·(B+2))` the *tube* around `ω/(ω−1)` (distance strictly finer than class `ω^{−B}`) contains **only** the dyadic grid `S_{B+1} + t·ω^{−(B+1)}` over the moving partial-sum anchor. **Tube theorem**: the only surreal born before day `ω·(B+2)` at distance finer than class `ω^{−(B+1)}` is `S_{B+2}` | [`Infinity/TubeCensus.lean`](Infinity/TubeCensus.lean) |
+| **The geometric halo is empty below `ω²`** | Every Hahn sum of `Σ ω⁻ᵏ` is born at or after day `ω·ω`: Hahn sums are strictly finer than every scale, but the tube below `ω²` holds only partial sums, which are not | [`Infinity/GeometricClose.lean`](Infinity/GeometricClose.lean) |
+| **`birthday (ω/(ω−1)) = ω·ω` exactly** | The Conway-inverse upper bound meets the halo-emptiness lower bound | [`Infinity/GeometricClose.lean`](Infinity/GeometricClose.lean) |
+| **THE CANONICAL GEOMETRIC SUM** | **`hahnSum (Σ_{k<ω} ω⁻ᵏ) = ω/(ω−1)`** — the repo's oldest conjecture, closed: birthday-simplicity *selects* the true value; the first computed value of the canonical transfinite summation operator on a series with no exact finite form, born exactly on day `ω·ω`. Any Hahn sum born by day `ω·ω` **is** `ω/(ω−1)` | [`Infinity/GeometricClose.lean`](Infinity/GeometricClose.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
