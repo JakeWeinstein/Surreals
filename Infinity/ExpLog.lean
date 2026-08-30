@@ -432,6 +432,51 @@ theorem birthday_expInf_logOmega :
   rw [expInf_logOmega_eq]
   exact birthday_one_add_inv_wpow_le
 
+/-- The canonical logarithm is not `ω⁻¹` itself: the stage-2 domination equation
+fails. -/
+theorem logOmega_ne_inv : logOmega ≠ (ω^ (1 : Surreal))⁻¹ := by
+  intro h
+  have h2 := isHahnSum_logSeries_logOmega 2
+  rw [h] at h2
+  have hps : partialSum logSeries 2 = (ω^ (1 : Surreal))⁻¹ + logSeries 1 := by
+    rw [partialSum, Finset.sum_range_succ, ← partialSum, partialSum_logSeries_one]
+  rw [hps] at h2
+  have hval : (ω^ (1 : Surreal))⁻¹ - ((ω^ (1 : Surreal))⁻¹ + logSeries 1) =
+      -(logSeries 1) := by ring
+  rw [hval, ArchimedeanClass.mk_neg] at h2
+  exact absurd h2 (not_le.2 (logSeries_strict_dominating 1))
+
+/-- **The exponential simplifies its argument**: the canonical logarithm of `1 + ω⁻¹`
+is born at or after day `ω + 1` — strictly *later* than its own exponential value
+(born on day `ω`, `birthday_expInf_logOmega`). By the census, a day-`ω` positive
+infinitesimal could only be `ω⁻¹`, and `logOmega ≠ ω⁻¹`. Birthday order is not
+preserved by `exp`. -/
+theorem omega0_add_one_le_birthday_logOmega :
+    NatOrdinal.of Ordinal.omega0 + 1 ≤ logOmega.birthday := by
+  have h0 : ((0 : Dyadic) : Surreal) = 0 := by
+    show (((0 : Dyadic) : ℚ) : Surreal) = 0
+    norm_num
+  have hω : NatOrdinal.of Ordinal.omega0 ≤ logOmega.birthday := by
+    refine omega0_le_birthday_of_infinitesimal_sub (c := 0) ?_ ?_ logOmega_pos.ne'
+    · rw [birthday_zero]
+      exact NatOrdinal.of_pos.2 Ordinal.omega0_pos
+    · rw [sub_zero]
+      exact logOmega_infinitesimal
+  refine Order.add_one_le_of_lt (hω.lt_of_ne ?_)
+  intro heq
+  have hinf : Infinitesimal (logOmega - ((0 : Dyadic) : Surreal)) := by
+    rw [h0, sub_zero]
+    exact logOmega_infinitesimal
+  rcases day_omega_near_dyadic hinf heq.ge with h | h | h
+  · rw [h0] at h
+    exact logOmega_pos.ne' h
+  · rw [h0, zero_add, show (-1 : Surreal) = -(1 : Surreal) from rfl, wpow_neg] at h
+    exact logOmega_ne_inv h
+  · have hp := logOmega_pos
+    rw [h, h0, zero_sub] at hp
+    have := wpow_pos (-1 : Surreal)
+    linarith
+
 end Surreal
 
 end
