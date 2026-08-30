@@ -30,6 +30,7 @@ import Infinity.ExpFin
 import Infinity.Laurent
 import Infinity.Darboux
 import Infinity.Norton
+import Infinity.DayOmega
 import Infinity.Leibniz
 import Infinity.Expectation
 import Infinity.PascalWager
