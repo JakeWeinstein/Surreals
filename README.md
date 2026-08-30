@@ -64,7 +64,8 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The geometric halo is empty on `[ω, ω·2)`** | Every Hahn sum of `Σ ω⁻ᵏ` is born at or after day **`ω·2`** — the uniformity theorem replaces the day-by-day censuses in one stroke | [`Infinity/GeometricBirthday.lean`](Infinity/GeometricBirthday.lean) |
 | **The day-`ω+1` census** | Born by day `ω+1` **iff** a grid point of height ≤ 1 over a real / ≤ 2 over a dyadic, or `±ω`, `±(ω+1)`, `±(ω−1)`; `birthday (ω ± 1) = ω + 1` exactly | [`Infinity/DayOmegaOne.lean`](Infinity/DayOmegaOne.lean) |
 | **The halving lemma + `ω`-power birthdays** | `G · ½ ≈ !{0 ∣ G}` for chain games (order-pinned halving); `birthday (ω⁻ᵏ·2⁻ʲ) ≤ ω·k + j` with **no** multiplicative birthday bounds (open upstream) | [`Infinity/GeometricUpper.lean`](Infinity/GeometricUpper.lean) |
-| **The geometric squeeze** | The canonical sum `hahnSum (Σ ω⁻ᵏ)` is born in the window **`[ω·2, ω²]`**; halo minimality (`= ω/(ω−1)`, born exactly `ω²`) is now squeezed to the `ω⁻²`-and-finer grid censuses plus an upper bound for `ω/(ω−1)` itself | [`Infinity/GeometricUpper.lean`](Infinity/GeometricUpper.lean) |
+| **The geometric squeeze** | The canonical sum `hahnSum (Σ ω⁻ᵏ)` is born in the window **`[ω·2, ω²]`** | [`Infinity/GeometricUpper.lean`](Infinity/GeometricUpper.lean) |
+| **`ω/(ω−1)` born by day `ω²`** | The Conway **inverse game** breaks the order-pinning deadlock: every inverse-option word sits at distance exactly `ω^k` from `(ω−1)⁻¹` (the word-class invariant), giving mutual cofinality with the partial-sum cut; **the halo-minimality conjecture is now equivalent to the single inequality `birthday (ω/(ω−1)) ≤ birthday (hahnSum Σ ω⁻ᵏ)`**, both sides in `[ω·2, ω²]` | [`Infinity/InverseBirthday.lean`](Infinity/InverseBirthday.lean) |
 
 ## The one-paragraph story
 
