@@ -50,3 +50,4 @@ import Infinity.ExpFibre
 import Infinity.ExpLadder
 import Infinity.ExpLogGrid
 import Infinity.ExpMixedFE
+import Infinity.ExpIntegral
