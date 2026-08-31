@@ -87,6 +87,9 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The padded census series** | A finite dyadic polynomial is not a Hahn sum of any nonzero-coefficient series — but it **is** a grid point at every level of a *padded* one (`1 + 2ω⁻¹ + ω⁻² + ω⁻³ + ⋯`): the tube around the padded sum polices the polynomial's halo. Every Hahn sum of the exponential series at `logΩ + logΩ` is born at or after day `ω·2` | [`Infinity/ExpFibre.lean`](Infinity/ExpFibre.lean) |
 | **The second exact exponential value** | `exp(2·log(1+ω⁻¹)) = 1 + 2ω⁻¹ + ω⁻²` — after `exp(log(1+ω⁻¹)) = 1+ω⁻¹` (day `ω`), the second-ever exact transcendental evaluation, born on day `ω·2` | [`Infinity/ExpFibre.lean`](Infinity/ExpFibre.lean) |
 | **Doubling the argument doubles the block** | `birthday (exp(logΩ + logΩ)) = ω·2` **exactly** — the first exact `expInf` birthday beyond day `ω` | [`Infinity/ExpFibre.lean`](Infinity/ExpFibre.lean) |
+| **THE FE LADDER** | **`exp(n·logΩ) = (1+ω⁻¹)ⁿ` for every `n ≥ 1`** — the canonical-sum exponential evaluated exactly on the entire lattice `ℕ⁺·logΩ`, by rung-coupled induction: each rung's exact value feeds the next rung's Hahn-sum half through the Cauchy product; the **binomial padded series** `(C(n,0), …, C(n,n), 1, 1, …)` prices each rung. The first exact evaluation of the surreal exponential on an infinite family of arguments | [`Infinity/ExpLadder.lean`](Infinity/ExpLadder.lean) |
+| **Every rung priced exactly** | `birthday (exp(n·logΩ)) = ω·n` for every `n ≥ 1` — the exponential of the `n`-fold argument is born on day `ω·n`, uniformly; rung 1 recovers the day-`ω` value | [`Infinity/ExpLadder.lean`](Infinity/ExpLadder.lean) |
+| **THE LATTICE FUNCTIONAL EQUATION** | `exp(a + b) = exp(a)·exp(b)` **exactly** for all `a, b ∈ ℕ⁺·logΩ` — infinitely many exact instances of the open multiplicativity question, settled affirmatively at once | [`Infinity/ExpLadder.lean`](Infinity/ExpLadder.lean) |
 
 ## The one-paragraph story
 
