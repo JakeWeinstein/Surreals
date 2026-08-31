@@ -112,6 +112,18 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Negation explodes the birthday** | `birthday (exp(−logΩ)) = ω·ω` while `birthday (exp(logΩ)) = ω`: negating the argument sends the exponential from day `ω` to a **limit block** — the first exp value priced at day `ω²` | [`Infinity/InverseValue.lean`](Infinity/InverseValue.lean) |
 | **The Conway inverse, upgraded** | `birthday ((1+ω⁻¹)⁻¹) ≤ ω²` by inverting the game `1 + ω^{−1}` directly: the inverse recursion's value-`1` word-chain **is** the alternating partial sums (`1 − ω⁻¹·Sₙ = Sₙ₊₁`), flipping sides each step — the two-sided cut comes for free | [`Infinity/AltInverse.lean`](Infinity/AltInverse.lean) |
 
+### The negative grid (2026-08-31, third fleet session)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **THE NEGATIVE GRID THEOREM** | **`exp (−log (1 + a·ω⁻¹)) = (1 + a·ω⁻¹)⁻¹` for every positive dyadic `a`** and *every* Hahn sum of the log series (fibre-general) — the single inverse value made an infinite family | [`Infinity/NegGridValue.lean`](Infinity/NegGridValue.lean) |
+| **THE GRID REFLECTION LAW** | `exp σ · exp (−σ) = 1` across the entire positive-anchor day-`ω` log grid — the multiplicative-inverse identity, exact, grid-wide | [`Infinity/NegGridValue.lean`](Infinity/NegGridValue.lean) |
+| **A family of canonical sums** | `hahnSum (Σ (−a)ᵏ ω⁻ᵏ) = (1 + a·ω⁻¹)⁻¹` for every positive dyadic `a`, each born exactly on day `ω²` — the canonical summation operator computed on an infinite family of series | [`Infinity/NegGridValue.lean`](Infinity/NegGridValue.lean), [`Infinity/NegGrid.lean`](Infinity/NegGrid.lean) |
+| **Inversion sends the grid to the limit block** | Every negative-grid exponential value is born exactly on day `ω·ω`, while its positive mirror lives in `[ω, ω·2)` | [`Infinity/NegGridValue.lean`](Infinity/NegGridValue.lean) |
+| **The general deep-halo trap** | Around *any* Hahn sum of *any* nonzero-dyadic monomial series, anything strictly finer than every scale is born at or after day `ω²` — the identification engine, now fully parametric | [`Infinity/NegGrid.lean`](Infinity/NegGrid.lean) |
+| **The gift-horse device** | The Conway-inverse bound `birthday ((1+a·ω⁻¹)⁻¹) ≤ ω²` for all positive dyadic `a`: adjoin a value-`1` left option to the product game `1 + a·ω^{−1}` (a four-line `equiv_of_forall_lf`), and the inverse recursion's word-chain generates the `Σ(−a·ω⁻¹)ᵏ` partial sums straddling the value | [`Infinity/NegGridInverse.lean`](Infinity/NegGridInverse.lean) |
+| **The generic negative domination half** | `(1+x)⁻¹` is a Hahn sum of the exponential series at `−σ` for *any* nonzero infinitesimal `x` and *any* Hahn-sum log `σ` — the reflection identity is anchor-free | [`Infinity/ExpNegGrid.lean`](Infinity/ExpNegGrid.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
