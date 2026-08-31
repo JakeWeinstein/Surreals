@@ -48,3 +48,5 @@ import Infinity.GeometricClose
 import Infinity.MonomialCensus
 import Infinity.ExpFibre
 import Infinity.ExpLadder
+import Infinity.ExpLogGrid
+import Infinity.ExpMixedFE
