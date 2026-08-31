@@ -55,3 +55,7 @@ import Infinity.AltGeometric
 import Infinity.AltInverse
 import Infinity.ExpNegLog
 import Infinity.InverseValue
+import Infinity.NegGrid
+import Infinity.NegGridInverse
+import Infinity.ExpNegGrid
+import Infinity.NegGridValue
