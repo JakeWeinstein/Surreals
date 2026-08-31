@@ -51,3 +51,7 @@ import Infinity.ExpLadder
 import Infinity.ExpLogGrid
 import Infinity.ExpMixedFE
 import Infinity.ExpIntegral
+import Infinity.AltGeometric
+import Infinity.AltInverse
+import Infinity.ExpNegLog
+import Infinity.InverseValue
