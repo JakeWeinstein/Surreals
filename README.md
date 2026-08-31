@@ -79,6 +79,15 @@ Everything is proved from first principles on top of [mathlib] and the
 | **THE CANONICAL GEOMETRIC SUM** | **`hahnSum (Σ_{k<ω} ω⁻ᵏ) = ω/(ω−1)`** — the repo's oldest conjecture, closed: birthday-simplicity *selects* the true value; the first computed value of the canonical transfinite summation operator on a series with no exact finite form, born exactly on day `ω·ω`. Any Hahn sum born by day `ω·ω` **is** `ω/(ω−1)` | [`Infinity/GeometricClose.lean`](Infinity/GeometricClose.lean) |
 | **THE `ω²`-HARDNESS THEOREM** | The tube census generalized to **every** strictly dominating series `Σ cₖ·ω⁻ᵏ` with nonzero dyadic coefficients, around *any* of its Hahn sums (which can serve as its own tube center): **no monomial series has any consistent sum born below day `ω²`** — transfinite summation is uniformly expensive, whatever the coefficients | [`Infinity/MonomialCensus.lean`](Infinity/MonomialCensus.lean) |
 
+### The first exact functional equation instance (2026-08-31)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **THE FIRST EXACT FE INSTANCE** | **`exp(logΩ + logΩ) = exp(logΩ)·exp(logΩ)`** — the canonical-sum exponential is multiplicative at `(logΩ, logΩ)`, *exactly*: both sides are `(1+ω⁻¹)² = 1 + 2ω⁻¹ + ω⁻²`. The route: go **up by squaring** (exact field algebra on the banked `exp(log(1+ω⁻¹)) = 1+ω⁻¹`), never down by roots — the Cauchy product supplies the Hahn-sum half for free, and the monomial tube census prices the halo | [`Infinity/ExpFibre.lean`](Infinity/ExpFibre.lean) |
+| **The padded census series** | A finite dyadic polynomial is not a Hahn sum of any nonzero-coefficient series — but it **is** a grid point at every level of a *padded* one (`1 + 2ω⁻¹ + ω⁻² + ω⁻³ + ⋯`): the tube around the padded sum polices the polynomial's halo. Every Hahn sum of the exponential series at `logΩ + logΩ` is born at or after day `ω·2` | [`Infinity/ExpFibre.lean`](Infinity/ExpFibre.lean) |
+| **The second exact exponential value** | `exp(2·log(1+ω⁻¹)) = 1 + 2ω⁻¹ + ω⁻²` — after `exp(log(1+ω⁻¹)) = 1+ω⁻¹` (day `ω`), the second-ever exact transcendental evaluation, born on day `ω·2` | [`Infinity/ExpFibre.lean`](Infinity/ExpFibre.lean) |
+| **Doubling the argument doubles the block** | `birthday (exp(logΩ + logΩ)) = ω·2` **exactly** — the first exact `expInf` birthday beyond day `ω` | [`Infinity/ExpFibre.lean`](Infinity/ExpFibre.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
