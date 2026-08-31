@@ -102,6 +102,16 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The exponential ODE on the lattice** | `exp′ = exp` (`HasDerivS nortonExp x (nortonExp x)`) at every real point *and* every point `ω + r` of the top galaxy — the increment never leaves the galaxy, so the real-point differential equation translates by `ω` and scales by `ω^ω` | [`Infinity/ExpIntegral.lean`](Infinity/ExpIntegral.lean) |
 | **NORTON'S OVERSHOOT IS EXACTLY `1`** | `nortonIntegralExp − ∫₀^ω eˣ dx = 1`: the genetic simplest-fit integral exceeds the forced FTC value by precisely the `exp 0` term the cut cannot see. Kruskal's 1970s observation — genetic `e^ω` vs. true `e^ω − 1` — as a single exact kernel-checked equation: **the CKN failure and its repair in one file** | [`Infinity/ExpIntegral.lean`](Infinity/ExpIntegral.lean) |
 
+### The inverse value and the reflection law (2026-08-31, fleet session)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **THE INVERSE EXPONENTIAL VALUE** | **`exp (−log(1+ω⁻¹)) = (1+ω⁻¹)⁻¹ = ω/(ω+1)`** — the first exact value of the canonical-sum exponential at a **negative** argument, and the first whose series has genuine cancellation. Domination half via the new truncated **reflection identity** `E(X)·E(−X) ≡ 1 (mod Xⁿ)` composed with the banked `exp∘log` divisibility | [`Infinity/InverseValue.lean`](Infinity/InverseValue.lean), [`Infinity/ExpNegLog.lean`](Infinity/ExpNegLog.lean) |
+| **THE REFLECTION LAW** | `exp(log(1+ω⁻¹)) · exp(−log(1+ω⁻¹)) = 1` — the multiplicative-inverse identity for the surreal exponential, exact on **No**: the FE program now covers a reflection pair, opening the negative rungs of the lattice | [`Infinity/InverseValue.lean`](Infinity/InverseValue.lean) |
+| **THE SECOND CANONICAL SUM** | **`hahnSum (Σ (−1)ᵏ ω⁻ᵏ) = ω/(ω+1)`**, born exactly on day `ω²` — the second computed value of the canonical transfinite summation operator, by the same squeeze as the geometric close | [`Infinity/InverseValue.lean`](Infinity/InverseValue.lean), [`Infinity/AltGeometric.lean`](Infinity/AltGeometric.lean) |
+| **Negation explodes the birthday** | `birthday (exp(−logΩ)) = ω·ω` while `birthday (exp(logΩ)) = ω`: negating the argument sends the exponential from day `ω` to a **limit block** — the first exp value priced at day `ω²` | [`Infinity/InverseValue.lean`](Infinity/InverseValue.lean) |
+| **The Conway inverse, upgraded** | `birthday ((1+ω⁻¹)⁻¹) ≤ ω²` by inverting the game `1 + ω^{−1}` directly: the inverse recursion's value-`1` word-chain **is** the alternating partial sums (`1 − ω⁻¹·Sₙ = Sₙ₊₁`), flipping sides each step — the two-sided cut comes for free | [`Infinity/AltInverse.lean`](Infinity/AltInverse.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
