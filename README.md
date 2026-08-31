@@ -94,6 +94,14 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Grid values priced exactly** | `birthday (exp (log (1+a·ω⁻¹))) = ω + (hgt a − 1)` — the exponential's grid values fill the entire block `[ω, ω·2)` rung by rung of the dyadic birth tree | [`Infinity/ExpLogGrid.lean`](Infinity/ExpLogGrid.lean) |
 | **THE MIXED FUNCTIONAL EQUATION** | **`exp (log(1+a·ω⁻¹) + log(1+b·ω⁻¹)) = (1+a·ω⁻¹)·(1+b·ω⁻¹)`** for all positive dyadics `a, b` and *any* Hahn sums of the two log series — the FE across **different** anchors, via the pair-padded census series `(1, a+b, ab, 1, 1, …)` | [`Infinity/ExpMixedFE.lean`](Infinity/ExpMixedFE.lean) |
 
+### The moonshot contrast (2026-08-31)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **`∫₀^ω eˣ dx = e^ω − 1`** | The **forced FTC integral** of the exponential over `[0, ω]` takes the Newton–Leibniz value `ω^ω − 1`: on the integrand class `c·eˣ + P(x)` (rigid across galaxies, as the kernel theorems demand), the fundamental theorem admits **exactly one** integral operator (`integralE_unique`, structural — no kernel constancy needed), FTC I holds with genuine `O(ε²)` surreal-point derivatives at both endpoints, and its value is `e^ω − 1` | [`Infinity/ExpIntegral.lean`](Infinity/ExpIntegral.lean) |
+| **The exponential ODE on the lattice** | `exp′ = exp` (`HasDerivS nortonExp x (nortonExp x)`) at every real point *and* every point `ω + r` of the top galaxy — the increment never leaves the galaxy, so the real-point differential equation translates by `ω` and scales by `ω^ω` | [`Infinity/ExpIntegral.lean`](Infinity/ExpIntegral.lean) |
+| **NORTON'S OVERSHOOT IS EXACTLY `1`** | `nortonIntegralExp − ∫₀^ω eˣ dx = 1`: the genetic simplest-fit integral exceeds the forced FTC value by precisely the `exp 0` term the cut cannot see. Kruskal's 1970s observation — genetic `e^ω` vs. true `e^ω − 1` — as a single exact kernel-checked equation: **the CKN failure and its repair in one file** | [`Infinity/ExpIntegral.lean`](Infinity/ExpIntegral.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
