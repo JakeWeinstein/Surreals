@@ -63,3 +63,4 @@ import Infinity.GameCofinality
 import Infinity.ExpDichotomy
 import Infinity.HaloGame
 import Infinity.ScaleEval
+import Infinity.ScaleCalculus
