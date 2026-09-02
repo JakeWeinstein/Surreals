@@ -145,6 +145,15 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The canonical jet extension is differentiable at every real point** | For every real power series `f` and real `r`, the function `r + δ ↦ scaleEvalS δ f` satisfies `HasDerivS` at `r` with derivative `f₁ = coeff 1 f`, with an explicit real constant; in particular the canonical `exp` has derivative `1` at `0` | [`Infinity/ScaleCalculus.lean`](Infinity/ScaleCalculus.lean) |
 | **THE KERNEL EXPONENTIAL THEOREM** | **At every nonzero infinitesimal `σ`, the canonical-sum exponential has derivative exactly `0`, and only `0`: `HasDerivS exp σ d ↔ d = 0`**, so `exp′ = exp` fails at every nonreal infinitesimal point although `exp′ = exp` holds at `0` and `exp` is not constant (`exp σ ≠ exp (σ/2)`). Blindness kills the error along fine increments; a constant above every `σ⁻ᵏ` absorbs the comparable ones. Canonical-sum semantics gives an analytic calculus *exactly on the reals*; beyond them, normal-form semantics is necessary, not merely convenient | [`Infinity/ScaleCalculus.lean`](Infinity/ScaleCalculus.lean) |
 
+### The normal-form chapter opens (2026-09-02, evening)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **The transfinite canonical sum is a game at every limit stage** | `hahnSumO t γ = mk !{S_β − 2\|t_β\| ∣ S_β + 2\|t_β\|}_{β<γ}` for every limit `γ` (with `S_β` the canonical partial sums), and the identification engine at limit stages | [`Infinity/TransfiniteGame.lean`](Infinity/TransfiniteGame.lean) |
+| **THE TRANSFINITE ADDITIVITY THEOREM** | `hahnSumO (t + u) α = hahnSumO t α + hahnSumO u α` at **every ordinal length** `α`, under no cancellation and *mutual class cofinality* below every limit stage — a condition proved necessary by the blindness phenomenon (a block infinitely finer than the other is invisible to the canonical sum) | [`Infinity/TransfiniteGame.lean`](Infinity/TransfiniteGame.lean) |
+| **The block theorem (an August question closed)** | `hahnSumO t (ω+ω) = hahnSum (first block) + hahnSum (second block)`: the block-compositional sum *is* birthday-minimal, answering the translation-equivariance question left open in `OrdinalSum`/`NormalForm` | [`Infinity/TransfiniteGame.lean`](Infinity/TransfiniteGame.lean) |
+| **Hahn-series evaluation adds on a common support** | `evalHahn (x + y) = evalHahn x + evalHahn y` for the library's `SurrealHahnSeries` with equal supports and no cancellation — the first ring-homomorphism law for Conway's normal-form evaluation | [`Infinity/TransfiniteGame.lean`](Infinity/TransfiniteGame.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
