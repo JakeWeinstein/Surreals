@@ -159,6 +159,15 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The scaling law** | `hahnSumO (m·t) α = m · hahnSumO t α` at every ordinal length for every coarsely representable factor `m` — in particular every monomial `c·ω^z` and every nonzero real; the product game `G_m × (option game)` with displacements `(m−a)(X−b)` | [`Infinity/HahnMerge.lean`](Infinity/HahnMerge.lean) |
 | **THE MERGE THEOREM** | **`evalHahn (x + y) = evalHahn x + evalHahn y`** for the library's Hahn series with **arbitrary supports** (no cancellation): truncations are prefixes (`InitialSeg` + `typein`), `evalHahn (trunc) = hahnSumO` of the prefix, the **split law** `evalHahn x = evalHahn (x.trunc e) + evalHahn (x − x.trunc e)`, and a per-option coarseness notion `TermRep` (each option coarse against *some* term class) that makes the sum-game engine work at limit stages of the merged series | [`Infinity/HahnMerge.lean`](Infinity/HahnMerge.lean) |
 
+### CONWAY'S NORMAL FORM THEOREM (2026-09-02, night)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **Coarse ⟹ simplest in the fine halo** | If `X` is coarsely representable at class `c`, every `z` with `z − X` strictly finer than `c` has `birthday X ≤ birthday z` (`z` fits the coarse representative). Hence **every coarsely representable point is halo-simple** at every finer scale — the roadmap's conjecture φ — and every successor-length normal-form value is halo-simple below its last term | [`Infinity/NormalFormTheorem.lean`](Infinity/NormalFormTheorem.lean) |
+| **The birthday bound along the extraction** | For every stage `β` at which the leading-term extraction of `x` is still alive, `birthday (S_β) ≤ birthday x` (limit stages: `x` fits the option game; successor stages: the coarse representative) | [`Infinity/NormalFormTheorem.lean`](Infinity/NormalFormTheorem.lean) |
+| **CONWAY'S NORMAL FORM THEOREM** | **The leading-term extraction of every surreal terminates**: the partial sums are pairwise distinct while alive and all born by day `birthday x`, a small set, so they cannot run through all ordinals. Hence **`x = hahnSumO (cnfTerm x) (cnfLength x)`** — every surreal is the canonical transfinite sum of its normal form `Σ_{β<α} r_β ω^{y_β}`, a strictly dominating series of monomials of a unique length — the gap `CNF.lean` isolated in August, closed. First proof in Lean (Mizar has the only other) | [`Infinity/NormalFormTheorem.lean`](Infinity/NormalFormTheorem.lean) |
+| **THE NORMAL-FORM CORRESPONDENCE** | `evalHahn : SurrealHahnSeries → Surreal` is a **bijection** (`hahnEquiv`), with inverse `toHahnSeries` built from the extraction; uniqueness of the normal form at every length (superseding the limit-length-only injectivity of August) | [`Infinity/NormalFormTheorem.lean`](Infinity/NormalFormTheorem.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
