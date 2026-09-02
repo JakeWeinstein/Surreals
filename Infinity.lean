@@ -68,3 +68,4 @@ import Infinity.TransfiniteGame
 import Infinity.Concatenation
 import Infinity.HahnMerge
 import Infinity.NormalFormTheorem
+import Infinity.HahnRing
