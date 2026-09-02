@@ -60,3 +60,4 @@ import Infinity.NegGridInverse
 import Infinity.ExpNegGrid
 import Infinity.NegGridValue
 import Infinity.GameCofinality
+import Infinity.ExpDichotomy
