@@ -124,6 +124,15 @@ Everything is proved from first principles on top of [mathlib] and the
 | **The gift-horse device** | The Conway-inverse bound `birthday ((1+a·ω⁻¹)⁻¹) ≤ ω²` for all positive dyadic `a`: adjoin a value-`1` left option to the product game `1 + a·ω^{−1}` (a four-line `equiv_of_forall_lf`), and the inverse recursion's word-chain generates the `Σ(−a·ω⁻¹)ᵏ` partial sums straddling the value | [`Infinity/NegGridInverse.lean`](Infinity/NegGridInverse.lean) |
 | **The generic negative domination half** | `(1+x)⁻¹` is a Hahn sum of the exponential series at `−σ` for *any* nonzero infinitesimal `x` and *any* Hahn-sum log `σ` — the reflection identity is anchor-free | [`Infinity/ExpNegGrid.lean`](Infinity/ExpNegGrid.lean) |
 
+### The multiplicativity theorem by game cofinality (2026-09-02)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **The canonical sum is the value of its option game** | `hahnSum t = mk !{sₙ − 2\|tₙ\| ∣ sₙ + 2\|tₙ\|}` — Conway's summation cut, as a game, *is* the birthday-simplest Hahn sum; every Hahn sum fits the game (the next-index estimate `\|w − sₙ\| < 2\|tₙ\|`) | [`Infinity/GameCofinality.lean`](Infinity/GameCofinality.lean) |
+| **The identification engine** | To prove `hahnSum t = mk G` it suffices that `mk G` is a Hahn sum and every option of `G` is beaten by an option of the summation game — one application of the simplicity theorem (`Fits.equiv_of_forall_moves`), **no birthday census** | [`Infinity/GameCofinality.lean`](Infinity/GameCofinality.lean) |
+| **THE MULTIPLICATIVITY THEOREM** | `hahnSum t · hahnSum u = hahnSum (t ⋆ u)` (Cauchy product) whenever the product scale is cofinal in the term products — the Conway product game's options `P − (x−xᴸ)(y−yᴸ)` are dominated by the product series' options; likewise **additivity** by the sum game | [`Infinity/GameCofinality.lean`](Infinity/GameCofinality.lean) |
+| **THE COMPARABLE-CLASS FUNCTIONAL EQUATION** | **`exp(σ + τ) = exp σ · exp τ` for all positive infinitesimals `σ, τ` with comparable Archimedean classes** (neither infinitely finer than the other) — the lattice, grid, and mixed-anchor functional equations of the two preceding days are corollaries; `exp(2σ) = (exp σ)²` for every positive infinitesimal; the day-`ω·2` lattice instance re-derived in one line | [`Infinity/GameCofinality.lean`](Infinity/GameCofinality.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
