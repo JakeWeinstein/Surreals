@@ -65,3 +65,4 @@ import Infinity.HaloGame
 import Infinity.ScaleEval
 import Infinity.ScaleCalculus
 import Infinity.TransfiniteGame
+import Infinity.Concatenation
