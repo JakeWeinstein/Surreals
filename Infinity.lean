@@ -67,3 +67,4 @@ import Infinity.ScaleCalculus
 import Infinity.TransfiniteGame
 import Infinity.Concatenation
 import Infinity.HahnMerge
+import Infinity.NormalFormTheorem
