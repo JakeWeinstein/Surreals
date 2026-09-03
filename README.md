@@ -222,11 +222,17 @@ typechecks a single file fast.
 
 ## Continuing this work
 
-Read [`docs/HANDOFF.md`](docs/HANDOFF.md) — a complete technical handoff (state, proofs
-guide, conventions, pitfalls, and the forward roadmap), written so that a new contributor
-(human or AI agent) can pick up exactly where this left off. The phase log lives in
-[`tasks/todo.md`](tasks/todo.md); the design rationale for limits in
-[`notes/limits-design.md`](notes/limits-design.md).
+The design rationale behind the main constructions is in [`notes/`](notes) — limits in
+[`notes/limits-design.md`](notes/limits-design.md), Gonshor's exponential in
+[`notes/gonshor-exp-design.md`](notes/gonshor-exp-design.md), the exponential at infinite
+arguments in [`notes/exp-infinite-design.md`](notes/exp-infinite-design.md), and the
+decision-theoretic reading in [`notes/decision-theory.md`](notes/decision-theory.md).
+
+Each Lean file opens with a module docstring stating what it proves and how it relates to
+its neighbours; `Infinity.lean` is the import root and reads as a table of contents.
+
+A paper describing these results, *The Simplest Sum*, is in preparation; it cites the Lean
+name of every theorem it states.
 
 [mathlib]: https://github.com/leanprover-community/mathlib4
 [CombinatorialGames]: https://github.com/vihdzp/combinatorial-games

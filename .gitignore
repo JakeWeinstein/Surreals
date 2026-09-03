@@ -2,11 +2,9 @@
 .claude/
 *.pdf
 nohup.out
-docs/paper/*.aux
-docs/paper/*.bbl
-docs/paper/*.blg
-docs/paper/*.fdb_latexmk
-docs/paper/*.fls
-docs/paper/*.log
-docs/paper/*.out
-docs/paper/*.toc
+
+# Split out to the private JakeWeinstein/surreals-paper repository
+/docs/paper/
+/docs/HANDOFF.md
+/tasks/
+/.research/
