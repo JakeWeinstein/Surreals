@@ -186,6 +186,15 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Composition and the chain rule** | `heval x (f.subst g) = heval (heval x g) f` for `g` without constant term (general `Γ`; a lemma mathlib lacks), so `fevalHS ε (f ∘ g) = fevalHS (fevalHS ε g) f` and the chain rule `(f ∘ g)′ = (f′ ∘ g)·g′` for jet functions | [`Infinity/JetCalculus.lean`](Infinity/JetCalculus.lean) |
 | **The faithful logarithm** | `exp ∘ log = 1 + X` and `log ∘ (exp − 1) = X` as power-series identities; `logH1p ε := fevalHS ε log` is a **two-sided inverse of `expH`** on infinitesimals, additive on products, strictly increasing, with **`log′ = 1/x`** at every point of the halo of `1` — an honest inverse pair, where the canonical pair was only halo simplification | [`Infinity/JetCalculus.lean`](Infinity/JetCalculus.lean) |
 
+### THE ANALYTIC CALCULUS ON THE FINITE GALAXY (2026-09-03)
+
+| Result | Statement (informal) | Where |
+|---|---|---|
+| **Every real function extends to the finite galaxy** | `extC f x := fevalHS (x − st x) (taylorJet f (st x))` with `taylorJet f r = Σ f⁽ⁿ⁾(r) Xⁿ/n!`; `extC f r = f r` on reals; **`HasDerivS (extC f) x (extC (deriv f) x)` at every finite `x`, for every `f : ℝ → ℝ`** (the jet derivative identity `derivative (taylorJet f r) = taylorJet (deriv f) r` is unconditional); higher derivatives; additive and multiplicative on `C^∞` functions, polynomials agree with `IntegralS` | [`Infinity/AnalyticCalculus.lean`](Infinity/AnalyticCalculus.lean) |
+| **THE FUNDAMENTAL THEOREM OF CALCULUS ON THE FINITE GALAXY** | `integralC f a b := extC (prim f) b − extC (prim f) a` with `prim f t = ∫₀ᵗ f`. **FTC I**: for continuous `f` and finite `x`, `HasDerivS (integralC f a) x (extC f x)`. **FTC II**: for any real antiderivative `G` of `f`, `integralC f a b = extC G b − extC G a`, for *all* surreal `a, b`. **Uniqueness**: any operator satisfying FTC II on the class equals `integralC`. Interval additivity, linearity, agreement with the real integral at real endpoints and with `Integral.lean` for polynomials | [`Infinity/AnalyticCalculus.lean`](Infinity/AnalyticCalculus.lean) |
+| **Showcases** | `extC Real.exp = expFinH`; **`∫₀^ε eˣ dx = expH ε − 1`**; `extC Real.log (1+ε) = logH1p ε`, `extC (·⁻¹) (1+ε) = (1+ε)⁻¹`; **`∫₁^{1+ε} dx/x = logH1p ε`** (for any continuous integrand agreeing with `1/x` near `1`); a local FTC II within a halo | [`Infinity/AnalyticCalculus.lean`](Infinity/AnalyticCalculus.lean) |
+| **The Costin–Ehrlich–Friedman obstruction in miniature** | For the smooth flat function `expNegInvGlue` (positive on `(0,∞)`, zero on `(−∞,0]`), **`extC expNegInvGlue ε = 0` for every positive infinitesimal `ε`**: the extension of smooth functions exists but is not order-faithful; `∫₀^ε expNegInvGlue = 0` | [`Infinity/AnalyticCalculus.lean`](Infinity/AnalyticCalculus.lean) |
+
 ## The one-paragraph story
 
 On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
