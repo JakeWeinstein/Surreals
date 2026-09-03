@@ -3,7 +3,8 @@
 **Machine-checked infinitesimal calculus on Conway's surreal numbers.**
 
 This repository contains, to our knowledge, the first formal (Lean 4) development of
-analysis on the surreal number field **No**: the standard-part decomposition, a complete
+analysis on the surreal number field **No** — including **Conway's Normal Form Theorem and
+the ordered-field isomorphism `No ≅ ℝ((ω^No))`** (`Infinity/HahnProduct.lean`) —: the standard-part decomposition, a complete
 differential calculus via infinitesimals, a limit theory valued in cuts, the obstruction
 theorems that explain why naive analysis fails on No, and a theory of transfinite
 summation under which infinite series have sums *without converging*.
@@ -169,6 +170,9 @@ Everything is proved from first principles on top of [mathlib] and the
 | **THE NORMAL-FORM CORRESPONDENCE** | `evalHahn : SurrealHahnSeries → Surreal` is a **bijection** (`hahnEquiv`), with inverse `toHahnSeries` built from the extraction; uniqueness of the normal form at every length (superseding the limit-length-only injectivity of August) | [`Infinity/NormalFormTheorem.lean`](Infinity/NormalFormTheorem.lean) |
 | **Additivity with cancellation** | **`evalHahn (x + y) = evalHahn x + evalHahn y` for all Hahn series** — no hypothesis: induction over the stages of the non-cancelling union series, with the cofinal/bounded-away split at limit stages; `evalHahn_neg`, `evalHahn_sub`, `evalHahn_sum`; **`hahnAddEquiv : SurrealHahnSeries ≃+ Surreal`** | [`Infinity/HahnRing.lean`](Infinity/HahnRing.lean) |
 | **Products by a term, and by finite series** | The coefficient formula `coeff_mul` (mathlib's Cauchy product through the library's `Lex` layer); `evalHahn (single z c * y) = c·ω^z · evalHahn y` (the support translates, an order isomorphism); `evalHahn 1 = 1`; **`evalHahn (x * y) = evalHahn x · evalHahn y` whenever one factor has finite support** | [`Infinity/HahnRing.lean`](Infinity/HahnRing.lean) |
+| **Order-preservation** | `evalHahn x < evalHahn y ↔ x < y`: the lexicographic (colex) order on coefficients is the sign of the leading coefficient of the difference, and the leading term dominates the evaluation; `evalHahn_strictMono` | [`Infinity/HahnProduct.lean`](Infinity/HahnProduct.lean) |
+| **THE TRANSFINITE PRODUCT THEOREM** | **`evalHahn (x * y) = evalHahn x · evalHahn y` for all Hahn series.** Induction on the pair of lengths; successor stages by distributivity; at a pair of limit lengths, every option of the product of the two option games is the evaluation of a *shorter* series, so by the induction hypothesis it is `evalHahn (x·y − D)` with `D` of definite sign — the formal product's value **fits the product game**; conversely the surreal product fits a game for the formal product's value because every exponent of `x·y` is a sum of two exponents and both factors keep going; the simplicity theorem (`eq_mk_of_fits_of_birthday_le`) forces equality. No estimate below the support is ever needed, which is what defeats the trap `x · x⁻¹ = 1` with both factors infinite | [`Infinity/HahnProduct.lean`](Infinity/HahnProduct.lean) |
+| **CONWAY'S ISOMORPHISM `No ≅ ℝ((ω^No))`** | **`hahnOrderRingIso : SurrealHahnSeries ≃+*o Surreal`** — the surreal numbers are the ordered field of Hahn series with real coefficients and surreal exponents, with evaluation the canonical transfinite sum and inverse the leading-term extraction; `evalHahn_inv`, `evalHahn_div`, `evalHahn_pow`, `toHahnSeries_mul`, `toHahnSeries_inv` | [`Infinity/HahnProduct.lean`](Infinity/HahnProduct.lean) |
 
 ## The one-paragraph story
 
