@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Jake Weinstein. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jake Weinstein
+-/
 import Infinity.CanonicalSum
 import Mathlib.Data.Nat.Choose.Sum
 import Mathlib.Data.Nat.Choose.Cast
