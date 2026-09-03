@@ -69,3 +69,4 @@ import Infinity.Concatenation
 import Infinity.HahnMerge
 import Infinity.NormalFormTheorem
 import Infinity.HahnRing
+import Infinity.HahnProduct
