@@ -1,28 +1,136 @@
 # Surreals
 
+**Machine-checked calculus on Conway's surreal numbers**, in Lean 4.
+77 files, ~37,000 lines, no `sorry`s.
+
 ## DISCLAIMER
 
-With the exception of these few diaclaimer paragraphs, everything in this repository was written by Claude. This project stemmed from a long-running curiosity I've had about dealing with infinity. I kept asking myself: why can't we do math with infinity? Shouldn't there be a way to formalize algebra and calculus done on infinities and infinitesimals? So I looked into it, and I found the surreal numbers. My goal here is to in some way advance our knowledge of this very natural numerical system and hopefully discover some use for analysis on the surreals. 
+With the exception of these few disclaimer paragraphs, everything in this repository was written by Claude. This project stemmed from a long-running curiosity I've had about dealing with infinity. I kept asking myself: why can't we do math with infinity? Shouldn't there be a way to formalize algebra and calculus done on infinities and infinitesimals? So I looked into it, and I found the surreal numbers. My goal here is to in some way advance our knowledge of this very natural numerical system and hopefully discover some use for analysis on the surreals. 
 
 Claude seems well equipped to deal with at least the beginning of this problem. Formalizing the existing work in lean was simple, and I think we've made some progress already in terms of developing a kind of surreal analysis. This seems like an ideal field to try to push the boundaries of AI-driven math research. Many of the ideas already exist and formalizing and expanding upon those ideas, drawing connections across math disciplines, seems like an ideal task for us to try to tackle with LLMs.
 
  If you stumble across this repo, hopefully it will be useful to you in some way. Please don't hesitate to reach out to me if you have questions. My contact information is on my Github profile.
 
-## Intro
 
-**Machine-checked infinitesimal calculus on Conway's surreal numbers.**
+## What this is
 
-This repository contains, to our knowledge, the first formal (Lean 4) development of
-analysis on the surreal number field **No** — including **Conway's Normal Form Theorem and
-the ordered-field isomorphism `No ≅ ℝ((ω^No))`** (`Infinity/HahnProduct.lean`) —: the standard-part decomposition, a complete
-differential calculus via infinitesimals, a limit theory valued in cuts, the obstruction
-theorems that explain why naive analysis fails on No, and a theory of transfinite
-summation under which infinite series have sums *without converging*.
+The surreal numbers **No** are a single ordered field containing the real numbers, the
+ordinals, `ω`, and infinitesimals like `1/ω`. Conway constructed them in the 1970s. The
+natural question ever since: *can you do analysis there* — limits, derivatives, integrals?
 
-Everything is proved from first principles on top of [mathlib] and the
-[CombinatorialGames] library and checked by the Lean kernel. There are **no `sorry`s**.
+This repository is a Lean 4 formalization of an answer. Everything below is checked by the
+Lean kernel on top of [mathlib] and the [CombinatorialGames] library, with no axioms beyond
+propositional extensionality, choice and quotient soundness.
 
-## Headline results
+### Why the obvious approach fails
+
+Two things break immediately, and both are proved here rather than assumed:
+
+- **Sequences cannot approach anything.** No point of `No` has a countable neighbourhood
+  base — any countable family of positive surreals `z₀, z₁, …` has a *positive* lower
+  bound, namely the cut `{0 | z₀, z₁, …}`. So an `ℕ`-indexed sequence converges **iff it is
+  eventually constant** ([`Limits.lean`](Infinity/Limits.lean)). The sequence `1/n`
+  converges to no surreal at all.
+- **The Riemann integral is vacuous.** No partition has infinitesimal mesh, so *every*
+  surreal is a Riemann integral of *every* function ([`Riemann.lean`](Infinity/Riemann.lean)).
+
+Analysis on `No` therefore cannot be founded on approximation. Something else is needed.
+
+### The replacement: domination
+
+Call `x` a **Hahn sum** of a series when every residual `x − (partial sum)` is dominated —
+in Archimedean class — by the first omitted term. Under this semantics infinite series have
+sums *without converging*. Hahn sums always exist for strictly dominating series, but they
+are not unique: any two differ by something finer than every term.
+
+The repository pursues two ways of pinning down a single value, and the tension between
+them is the story:
+
+1. **Conway's simplicity principle** — take the Hahn sum of least *birthday*. Elegant,
+   canonical, and it turns out to have a sharp and provable limit.
+2. **Normal form** — evaluate in the Hahn-series field via the isomorphism
+   `No ≅ ℝ((ω^No))`. Sees every scale, and supports a genuine calculus.
+
+The punchline is that (1) yields an analytic calculus **exactly on ℝ** and nowhere else,
+which is what forces (2).
+
+## The main results
+
+| Result | What it says | Where |
+|---|---|---|
+| **Conway's isomorphism `No ≅ ℝ((ω^No))`** | The surreals *are* the ordered field of Hahn series with real coefficients and surreal exponents. Evaluation is the canonical transfinite sum; its inverse is leading-term extraction | [`HahnProduct.lean`](Infinity/HahnProduct.lean) |
+| **Conway's Normal Form Theorem** | Leading-term extraction terminates for every surreal, so every surreal is uniquely `Σ_{β<α} r_β ω^{y_β}`. Proved by a Burali-Forti argument on birthdays | [`NormalFormTheorem.lean`](Infinity/NormalFormTheorem.lean) |
+| **A faithful exponential with `exp′ = exp`** | `expH` is multiplicative at *all* infinitesimals, injective, strictly increasing, and satisfies `exp′ = exp` at every infinitesimal and every finite surreal | [`FaithfulExp.lean`](Infinity/FaithfulExp.lean) |
+| **FTC on the finite galaxy** | Every real function extends through its Taylor jets; both halves of the Fundamental Theorem hold, and they determine the integral **uniquely**. `∫₀^ε eˣ dx = expH ε − 1` | [`AnalyticCalculus.lean`](Infinity/AnalyticCalculus.lean) |
+| **The kernel theorems** | A function can have derivative `0` *everywhere* without being constant — even jumping between two points an infinitesimal apart. So no FTC integral exists for arbitrary surreal functions | [`GeneralDeriv.lean`](Infinity/GeneralDeriv.lean), [`MicroKernel.lean`](Infinity/MicroKernel.lean) |
+| **Blindness and the dichotomy** | The birthday-selected exponential satisfies `exp(σ+τ) = exp σ · exp τ` **iff** the Archimedean classes are comparable, and cannot see perturbations below every power of its argument — so it is not injective | [`ExpDichotomy.lean`](Infinity/ExpDichotomy.lean) |
+| **The kernel exponential theorem** | At every nonzero infinitesimal the birthday-selected exponential has derivative exactly `0`, though it is not constant. This is the sharp boundary of the simplicity semantics | [`ScaleCalculus.lean`](Infinity/ScaleCalculus.lean) |
+
+## What is new here, and what is not
+
+The honest split, because it is easy to overclaim in this area:
+
+- **The formalization is the main contribution.** To our knowledge this is the first
+  machine-checked development of analysis on `No` in any proof assistant; the first proof of
+  the Normal Form Theorem in Lean (Pąk and Kaliszyk did it in Mizar, without analysis); and
+  we are not aware of a machine-checked `No ≅ ℝ((ω^No))` in any system.
+- **The normal-form mathematics is Conway's and Gonshor's** (1976/1986). What is new is the
+  route: coarse representability, a birthday argument for termination, and a product theorem
+  proved by exhibiting two *fits* rather than by any estimate below the support.
+- **The finite-galaxy calculus is classical** — it follows from Neumann's lemma and van den
+  Dries–Ehrlich. What is new is that it is machine-checked and explicit, with stated
+  derivative constants and a uniqueness theorem for the integral.
+- **New as stated** are the results about the *birthday-selected* sum: the multiplicativity
+  dichotomy, blindness, the halo-simplification description of `exp ∘ log`, and the kernel
+  exponential theorem. These concern an object that exists only once birthdays are in play,
+  and have no Hahn-series analogue, where sums are unique.
+- **The canonical exponential is not Gonshor's exponential.** Gonshor's is total, injective
+  and fully multiplicative; the one studied here is provably neither injective nor fully
+  multiplicative. Nothing here is proved about Gonshor's function.
+- The kernel theorems are an **elementary** obstruction to the Fundamental Theorem, and are
+  not a formalization of Costin–Ehrlich–Friedman's set-theoretic negative result.
+
+## Where to look
+
+Start with [`Infinity.lean`](Infinity.lean), the import root — it reads as a table of
+contents. Every file opens with a module docstring saying what it proves and how it relates
+to its neighbours.
+
+| Theme | Files |
+|---|---|
+| Foundations | [`Basic`](Infinity/Basic.lean), [`StandardPart`](Infinity/StandardPart.lean), [`Limits`](Infinity/Limits.lean), [`Riemann`](Infinity/Riemann.lean) |
+| Differential calculus | [`Derivative`](Infinity/Derivative.lean), [`DerivRules`](Infinity/DerivRules.lean), [`FiniteDeriv`](Infinity/FiniteDeriv.lean), [`GeneralDeriv`](Infinity/GeneralDeriv.lean) |
+| The obstructions | [`GeneralDeriv`](Infinity/GeneralDeriv.lean), [`MicroKernel`](Infinity/MicroKernel.lean), [`KernelSeparation`](Infinity/KernelSeparation.lean), [`Norton`](Infinity/Norton.lean) |
+| Summation | [`Summation`](Infinity/Summation.lean), [`Series`](Infinity/Series.lean), [`CanonicalSum`](Infinity/CanonicalSum.lean), [`GameCofinality`](Infinity/GameCofinality.lean) |
+| Normal form | [`NormalFormTheorem`](Infinity/NormalFormTheorem.lean), [`HahnRing`](Infinity/HahnRing.lean), [`HahnProduct`](Infinity/HahnProduct.lean) |
+| Faithful calculus | [`FaithfulExp`](Infinity/FaithfulExp.lean), [`JetCalculus`](Infinity/JetCalculus.lean), [`AnalyticCalculus`](Infinity/AnalyticCalculus.lean) |
+| Integration | [`Integral`](Infinity/Integral.lean), [`IntegralS`](Infinity/IntegralS.lean), [`ExpIntegral`](Infinity/ExpIntegral.lean) |
+
+## Building
+
+```bash
+brew install elan-init        # Lean toolchain manager (macOS)
+lake exe cache get            # prebuilt mathlib binaries
+lake build                    # builds everything incl. CombinatorialGames (~minutes)
+```
+
+Toolchain and dependencies are pinned in [`lean-toolchain`](lean-toolchain) and
+[`lakefile.toml`](lakefile.toml). To typecheck a single file quickly:
+
+```bash
+lake env lean Infinity/AnalyticCalculus.lean
+```
+
+## Full result index
+
+The repository was built in sessions, each closing a specific question. The tables below are
+the complete chronological record — several hundred results, with the Lean file for each.
+They are detailed and assume context; the summary above is the way in.
+
+<details>
+<summary><b>Expand the full chronological index</b></summary>
+
+### The early results
 
 | Result | Statement (informal) | Where |
 |---|---|---|
@@ -205,30 +313,21 @@ Everything is proved from first principles on top of [mathlib] and the
 | **Showcases** | `extC Real.exp = expFinH`; **`∫₀^ε eˣ dx = expH ε − 1`**; `extC Real.log (1+ε) = logH1p ε`, `extC (·⁻¹) (1+ε) = (1+ε)⁻¹`; **`∫₁^{1+ε} dx/x = logH1p ε`** (for any continuous integrand agreeing with `1/x` near `1`); a local FTC II within a halo | [`Infinity/AnalyticCalculus.lean`](Infinity/AnalyticCalculus.lean) |
 | **The Costin–Ehrlich–Friedman obstruction in miniature** | For the smooth flat function `expNegInvGlue` (positive on `(0,∞)`, zero on `(−∞,0]`), **`extC expNegInvGlue ε = 0` for every positive infinitesimal `ε`**: the extension of smooth functions exists but is not order-faithful; `∫₀^ε expNegInvGlue = 0` | [`Infinity/AnalyticCalculus.lean`](Infinity/AnalyticCalculus.lean) |
 
+
+</details>
+
 ## The one-paragraph story
 
-On the real numbers, "the series sums to S" and "the partial sums approach S" are the same
-concept. On the surreals they come apart — provably. No point of No has a countable
-neighborhood base (any countable family of positive surreals has a positive lower bound,
-the Conway cut `{0 | z₀, z₁, …}`), so ω-length sequences can never approach anything they
-don't eventually equal; yet infinite series still have canonical sums under *domination*
-semantics: `x` sums the series when every residual `x − (partial sum)` is dominated (in
-Archimedean class) by the first omitted term. This repository proves both halves and
-exhibits the flagship instance. The consequence for the fifty-year-open problem of surreal
-integration (Conway–Kruskal–Norton) is a precise reframing: an integral on No must be a
-domination-semantics object, because approximation-semantics integrals are impossible.
-
-## Building
-
-```
-brew install elan-init        # Lean toolchain manager (macOS)
-lake exe cache get            # prebuilt mathlib binaries
-lake build                    # builds everything incl. CombinatorialGames (~minutes)
-```
-
-Toolchain and dependencies are pinned in [`lean-toolchain`](lean-toolchain) and
-[`lakefile.toml`](lakefile.toml). Dev loop: `lake env lean Infinity/<File>.lean`
-typechecks a single file fast.
+On the real numbers, "the series sums to `S`" and "the partial sums approach `S`" are the
+same concept. On the surreals they come apart — provably. No point of `No` has a countable
+neighbourhood base, so `ω`-length sequences can never approach anything they don't
+eventually equal; yet infinite series still have sums under *domination* semantics. This
+repository proves both halves, and then follows the consequence: birthday-minimal selection
+gives a canonical sum whose calculus stops exactly at the reals, so the normal-form
+isomorphism `No ≅ ℝ((ω^No))` is not a convenience but a necessity. The reframing this offers
+for the fifty-year-old Conway–Kruskal–Norton integration problem is that an integral on `No`
+must be a domination-semantics object, because approximation-semantics integrals are
+impossible.
 
 ## Continuing this work
 
@@ -238,8 +337,11 @@ The design rationale behind the main constructions is in [`notes/`](notes) — l
 arguments in [`notes/exp-infinite-design.md`](notes/exp-infinite-design.md), and the
 decision-theoretic reading in [`notes/decision-theory.md`](notes/decision-theory.md).
 
-Each Lean file opens with a module docstring stating what it proves and how it relates to
-its neighbours; `Infinity.lean` is the import root and reads as a table of contents.
+Open directions, roughly in order of tractability: order-faithfulness of the jet extension
+on analytic germs; composition of analytic extensions; Gonshor's exponential on the purely
+infinite part, which would carry FTC I to every point of `[0, ω]` and give
+`∫₀^ω eˣ dx = e^ω − 1` outright; and the Berarducci–Mantova derivation, for which the
+isomorphism above is the natural interface.
 
 A paper describing these results, *The Simplest Sum*, is in preparation; it cites the Lean
 name of every theorem it states.
