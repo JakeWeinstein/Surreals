@@ -8,6 +8,8 @@ Claude seems well equipped to deal with at least the beginning of this problem. 
 
  If you stumble across this repo, hopefully it will be useful to you in some way. Please don't hesitate to reach out to me if you have questions. My contact information is on my Github profile.
 
+## Intro
+
 **Machine-checked infinitesimal calculus on Conway's surreal numbers.**
 
 This repository contains, to our knowledge, the first formal (Lean 4) development of
