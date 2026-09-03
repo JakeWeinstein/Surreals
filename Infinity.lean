@@ -71,3 +71,4 @@ import Infinity.NormalFormTheorem
 import Infinity.HahnRing
 import Infinity.HahnProduct
 import Infinity.FaithfulExp
+import Infinity.JetCalculus
