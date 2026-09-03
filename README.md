@@ -1,5 +1,13 @@
 # Surreals
 
+## DISCLAIMER
+
+With the exception of these few diaclaimer paragraphs, everything in this repository was written by Claude. This project stemmed from a long-running curiosity I've had about dealing with infinity. I kept asking myself: why can't we do math with infinity? Shouldn't there be a way to formalize algebra and calculus done on infinities and infinitesimals? So I looked into it, and I found the surreal numbers. My goal here is to in some way advance our knowledge of this very natural numerical system and hopefully discover some use for analysis on the surreals. 
+
+Claude seems well equipped to deal with at least the beginning of this problem. Formalizing the existing work in lean was simple, and I think we've made some progress already in terms of developing a kind of surreal analysis. This seems like an ideal field to try to push the boundaries of AI-driven math research. Many of the ideas already exist and formalizing and expanding upon those ideas, drawing connections across math disciplines, seems like an ideal task for us to try to tackle with LLMs.
+
+ If you stumble across this repo, hopefully it will be useful to you in some way. Please don't hesitate to reach out to me if you have questions. My contact information is on my Github profile.
+
 **Machine-checked infinitesimal calculus on Conway's surreal numbers.**
 
 This repository contains, to our knowledge, the first formal (Lean 4) development of
